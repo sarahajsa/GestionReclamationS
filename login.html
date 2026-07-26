@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion — BMCE Réclamations</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <div class="login-page">
+    <div class="login-card">
+      <div class="logo">
+        <img src="assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+      </div>
+
+      <h1>Connexion</h1>
+      <p class="login-subtitle" id="login-subtitle">Accédez à votre espace réclamations</p>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="email">Adresse e-mail</label>
+          <input type="email" id="email" class="form-control" placeholder="votre@email.ma" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Mot de passe</label>
+          <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:8px;">
+          Se connecter
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <a href="index.html">&larr; Retour à l'accueil</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/app.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get('action');
+    const redirect = params.get('redirect');
+
+    const subtitles = {
+      deposer: 'Connectez-vous pour déposer une réclamation',
+      suivre: 'Connectez-vous pour suivre vos réclamations'
+    };
+    if (action && subtitles[action]) {
+      document.getElementById('login-subtitle').textContent = subtitles[action];
+    }
+
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const user = App.login(email, password);
+
+      if (!user) {
+        App.showToast('Identifiants incorrects', 'error');
+        return;
+      }
+
+      if (redirect) {
+        window.location.href = decodeURIComponent(redirect);
+        return;
+      }
+
+      if (user.role === 'admin') {
+        window.location.href = 'admin/dashboard.html';
+      } else if (action === 'deposer') {
+        window.location.href = 'client/deposer.html';
+      } else if (action === 'suivre') {
+        window.location.href = 'client/suivre.html';
+      } else {
+        window.location.href = 'client/dashboard.html';
+      }
+    });
+  </script>
+</body>
+</html>

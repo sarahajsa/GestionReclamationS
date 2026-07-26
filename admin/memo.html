@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mémos agence — Admin</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <img src="../assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+        </div>
+      </div>
+      <div class="sidebar-user">
+<div class="user-avatar" id="sidebar-user-avatar">A1</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Admin 1</div>
+          <div class="user-role" id="sidebar-user-role">Administrateur</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Administration</div>
+        <ul>
+<li class="nav-item">
+            <a href="dashboard.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Tableau de bord</a>
+          </li>
+          <li class="nav-item">
+            <a href="reclamations.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Réclamations</a>
+          </li>
+          <li class="nav-item active">
+            <a href="memo.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Mémos agence</a>
+          </li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" id="btn-logout" class="btn btn-ghost">↩ Déconnexion</a>
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <button class="menu-toggle">☰</button>
+        <h1 class="topbar-title">Mémos — Communication agence</h1>
+      </header>
+
+      <div class="page-content">
+        <div class="filters-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-memo" placeholder="Rechercher par référence ou contenu...">
+          </div>
+          <select class="filter-select" id="filter-role">
+            <option value="">Tous les émetteurs</option>
+            <option value="admin">Administration</option>
+            <option value="agence">Agence</option>
+          </select>
+          <select class="filter-select" id="filter-agence"><option value="">Toutes les agences</option></select>
+          <select class="filter-select" id="filter-memo-statut">
+            <option value="">Tous les statuts</option><option value="nouveau">Nouveau</option><option value="encours">En cours</option><option value="attente">En attente</option><option value="resolu">Résolu</option><option value="rejete">Rejeté</option>
+          </select>
+          <select class="filter-select" id="filter-memo-gravite">
+            <option value="">Toutes les gravités</option><option value="basse">Basse</option><option value="moyenne">Moyenne</option><option value="haute">Haute</option><option value="critique">Critique</option>
+          </select>
+        </div>
+
+        <div id="memos-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    const session = App.requireAuth(['admin']);
+    if (!session) throw new Error('Unauthorized');
+
+    function getAllMemos() {
+      const all = [];
+      App.reclamations.forEach(rec => {
+        rec.memos.forEach(m => {
+          all.push({ ...m, reference: rec.reference, objet: rec.objet, statut: rec.statut, gravite: rec.gravite, agence: m.role === 'agence' ? m.auteur : '' });
+        });
+      });
+      return all.sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+
+    function renderMemos() {
+      const q = document.getElementById('search-memo').value.toLowerCase();
+      const roleFilter = document.getElementById('filter-role').value;
+      const agenceFilter = document.getElementById('filter-agence').value;
+      const statutFilter = document.getElementById('filter-memo-statut').value;
+      const graviteFilter = document.getElementById('filter-memo-gravite').value;
+      let memos = getAllMemos();
+
+      if (q) {
+        memos = memos.filter(m =>
+          m.reference.toLowerCase().includes(q) ||
+          m.message.toLowerCase().includes(q) ||
+          m.auteur.toLowerCase().includes(q)
+        );
+      }
+      if (roleFilter) {
+        memos = memos.filter(m => m.role === roleFilter);
+      }
+      if (agenceFilter) memos = memos.filter(m => m.agence === agenceFilter);
+      if (statutFilter) memos = memos.filter(m => m.statut === statutFilter);
+      if (graviteFilter) memos = memos.filter(m => m.gravite === graviteFilter);
+
+      const container = document.getElementById('memos-container');
+
+      if (memos.length === 0) {
+        container.innerHTML = `
+          <div class="card"><div class="card-body">
+            <div class="empty-state">
+              <div class="empty-state-icon">💬</div>
+              <h3>Aucun mémo</h3>
+              <p>Les échanges entre l'administration et les agences apparaîtront ici.</p>
+            </div>
+          </div></div>`;
+        return;
+      }
+
+      container.innerHTML = memos.map(m => `
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-body">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <a href="detail.html?ref=${m.reference}" class="ref-link">${m.reference}</a>
+                <span style="font-size:13px; color:var(--text-muted);">${m.objet}</span>
+              </div>
+              <span class="timeline-date">${App.formatDateTime(m.date)}</span>
+            </div>
+            <div class="timeline-header" style="margin-bottom:8px;">
+              <span class="timeline-author">${m.auteur}</span>
+              <span class="badge badge-${m.role === 'admin' ? 'encours' : 'attente'}">${m.role === 'admin' ? 'Administration' : 'Agence'}</span>
+            </div>
+            <div class="timeline-body">${m.message}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    const agencySelect = document.getElementById('filter-agence');
+    [...new Set(getAllMemos().map(m => m.agence).filter(Boolean))].sort().forEach(agence => {
+      agencySelect.insertAdjacentHTML('beforeend', `<option value="${agence}">${agence}</option>`);
+    });
+    document.getElementById('search-memo').addEventListener('input', renderMemos);
+    ['filter-role', 'filter-agence', 'filter-memo-statut', 'filter-memo-gravite'].forEach(id => document.getElementById(id).addEventListener('change', renderMemos));
+    renderMemos();
+  </script>
+</body>
+</html>

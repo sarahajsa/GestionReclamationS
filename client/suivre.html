@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suivre mes réclamations — Client</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <img src="../assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+        </div>
+      </div>
+      <div class="sidebar-user">
+<div class="user-avatar" id="sidebar-user-avatar">C1</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Client 1</div>
+          <div class="user-role" id="sidebar-user-role">Client</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Menu</div>
+        <ul>
+<li class="nav-item">
+            <a href="dashboard.html"><span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Tableau de bord</a>
+          </li>
+          <li class="nav-item">
+            <a href="deposer.html"><span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span> Déposer réclamation</a>
+          </li>
+          <li class="nav-item active">
+            <a href="suivre.html"><span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span> Suivre réclamations</a>
+          </li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" id="btn-logout" class="btn btn-ghost">↩ Déconnexion</a>
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <button class="menu-toggle">☰</button>
+        <h1 class="topbar-title">Suivre mes réclamations</h1>
+      </header>
+
+      <div class="page-content">
+        <!-- Liste -->
+        <div id="list-view">
+          <div class="filters-bar">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="search-input" placeholder="Rechercher par référence ou objet...">
+            </div>
+            <select class="filter-select" id="filter-statut">
+              <option value="">Tous les statuts</option>
+              <option value="nouveau">Nouveau</option>
+              <option value="encours">En cours</option>
+              <option value="attente">En attente</option>
+              <option value="resolu">Résolu</option>
+              <option value="rejete">Rejeté</option>
+            </select>
+          </div>
+
+          <div class="card">
+            <div class="card-body" style="padding:0;">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Référence</th>
+                      <th>Objet</th>
+                      <th>Type</th>
+                    <th>Gravité</th>
+                    <th>Statut</th>
+                      <th>Date</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="reclamations-list"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Détail -->
+        <div id="detail-view" style="display:none;">
+          <button class="btn btn-ghost btn-sm" id="btn-back" style="margin-bottom:16px;">← Retour à la liste</button>
+          <div class="client-detail-grid">
+          <div class="card" style="margin-bottom:24px;">
+                <div class="card-header">
+                  <div>
+                    <h2 id="detail-ref" style="font-family:monospace;"></h2>
+                    <span class="badge" id="detail-statut"></span>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="detail-section">
+                    <h3>Informations</h3>
+                    <div class="info-grid">
+                      <div class="info-item"><label>Objet</label><span id="detail-objet"></span></div>
+                      <div class="info-item"><label>Type</label><span id="detail-type"></span></div>
+                      <div class="info-item"><label>Gravité</label><span id="detail-gravite"></span></div>
+                      <div class="info-item"><label>Portée</label><span id="detail-portee"></span></div>
+                      <div class="info-item"><label>Date de dépôt</label><span id="detail-date"></span></div>
+                      <div class="info-item"><label>Dernière mise à jour</label><span id="detail-update"></span></div>
+                    </div>
+                  </div>
+                  <div class="detail-section">
+                    <h3>Description</h3>
+                    <div class="detail-text" id="detail-text"></div>
+                  </div>
+                  <div class="detail-section" id="detail-pj-section" style="display:none;">
+                    <h3>Pièce jointe</h3>
+                    <div class="file-preview" id="detail-pj"></div>
+                  </div>
+                </div>
+              </div>
+              <aside class="card journey-card">
+                <div class="card-header"><h3>Parcours de la réclamation</h3></div>
+                <div class="card-body">
+                  <p class="journey-caption">Suivez l’avancement de votre dossier.</p>
+                  <div class="journey-steps" id="client-journey-steps"></div>
+                </div>
+              </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    const session = App.requireAuth(['client']);
+    if (!session) throw new Error('Unauthorized');
+
+    let myRecs = App.reclamations.filter(r => r.client_id === 'client');
+    const listView = document.getElementById('list-view');
+    const detailView = document.getElementById('detail-view');
+    const clientJourneyStages = [
+      { id: 'nouveau', title: 'Nouveau', action: 'Réclamation enregistrée' },
+      { id: 'encours', title: 'En cours', action: 'Dossier pris en charge' },
+      { id: 'attente', title: 'En attente', action: 'En attente d’un retour' },
+      { id: 'resolu', title: 'Résolu', action: 'Dossier clôturé avec réponse' },
+      { id: 'rejete', title: 'Rejeté', action: 'Dossier clôturé sans suite favorable' }
+    ];
+
+    function renderClientJourney(rec) {
+      const history = rec.statusHistory || [{ status: 'nouveau', date: rec.date_creation, action: 'Réclamation enregistrée' }, ...(rec.statut !== 'nouveau' ? [{ status: rec.statut, date: rec.date_modification, action: clientJourneyStages.find(item => item.id === rec.statut).action }] : [])];
+      document.getElementById('client-journey-steps').innerHTML = clientJourneyStages.map((step, index) => `
+        <div class="journey-step ${rec.statut === step.id ? 'is-complete is-current' : ''}">
+          <span class="journey-marker">${rec.statut === step.id ? '✓' : index + 1}</span>
+          <span><strong>${step.title}</strong><small>${rec.statut === step.id ? 'Statut actuel' : step.action}</small></span>
+        </div>`).join('') + `
+        <div class="journey-history">${history.slice().reverse().map(item => `<div><span class="badge ${App.getStatutBadge(item.status)}">${App.getStatutLabel(item.status)}</span><p>${item.action}</p><small>${App.formatDateTime(item.date)}</small></div>`).join('')}</div>`;
+    }
+
+    function renderList(filter = '') {
+      const statutFilter = document.getElementById('filter-statut').value;
+      const q = filter.toLowerCase();
+      const filtered = myRecs.filter(r => {
+        const matchSearch = !q || r.reference.toLowerCase().includes(q) || r.objet.toLowerCase().includes(q);
+        const matchStatut = !statutFilter || r.statut === statutFilter;
+        return matchSearch && matchStatut;
+      });
+
+      const tbody = document.getElementById('reclamations-list');
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>Aucune réclamation trouvée.</p></div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(r => `
+        <tr>
+          <td><a href="#" class="ref-link" data-ref="${r.reference}">${r.reference}</a></td>
+          <td>${r.objet}</td>
+          <td>${r.type_label}</td>
+          <td><span class="badge ${App.getGraviteBadge(r.gravite)}">${r.gravite_label}</span></td>
+          <td><span class="badge ${App.getStatutBadge(r.statut)}">${r.statut_label}</span></td>
+          <td>${App.formatDate(r.date_creation)}</td>
+          <td><button class="btn btn-outline btn-sm" data-ref="${r.reference}">Voir</button></td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('[data-ref]').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          showDetail(el.dataset.ref);
+        });
+      });
+    }
+
+    function showDetail(ref) {
+      const rec = myRecs.find(r => r.reference === ref);
+      if (!rec) return;
+
+      document.getElementById('detail-ref').textContent = rec.reference;
+      const statutEl = document.getElementById('detail-statut');
+      statutEl.textContent = rec.statut_label;
+      statutEl.className = 'badge ' + App.getStatutBadge(rec.statut);
+      document.getElementById('detail-objet').textContent = rec.objet;
+      document.getElementById('detail-type').textContent = rec.type_label;
+      document.getElementById('detail-gravite').innerHTML = `<span class="badge ${App.getGraviteBadge(rec.gravite)}">${rec.gravite_label}</span>`;
+      document.getElementById('detail-portee').textContent = rec.portee === 'dossier' ? `Dossier ${rec.numero_dossier}` : 'Générale';
+      document.getElementById('detail-date').textContent = App.formatDateTime(rec.date_creation);
+      document.getElementById('detail-update').textContent = App.formatDateTime(rec.date_modification);
+      document.getElementById('detail-text').textContent = rec.detail;
+      renderClientJourney(rec);
+
+      const pjSection = document.getElementById('detail-pj-section');
+      if (rec.piece_jointe) {
+        pjSection.style.display = 'block';
+        document.getElementById('detail-pj').innerHTML = `<span>📄</span><span>${rec.piece_jointe}</span>`;
+      } else {
+        pjSection.style.display = 'none';
+      }
+
+      listView.style.display = 'none';
+      detailView.style.display = 'block';
+    }
+
+    document.getElementById('btn-back').addEventListener('click', () => {
+      detailView.style.display = 'none';
+      listView.style.display = 'block';
+    });
+
+    document.getElementById('search-input').addEventListener('input', (e) => renderList(e.target.value));
+    document.getElementById('filter-statut').addEventListener('change', () => renderList(document.getElementById('search-input').value));
+
+    renderList();
+
+    // Auto-open detail if ref in URL
+    const urlRef = new URLSearchParams(window.location.search).get('ref');
+    if (urlRef) showDetail(urlRef);
+  </script>
+</body>
+</html>

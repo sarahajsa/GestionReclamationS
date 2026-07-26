@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord — Admin</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <img src="../assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+        </div>
+      </div>
+      <div class="sidebar-user">
+<div class="user-avatar" id="sidebar-user-avatar">A1</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Admin 1</div>
+          <div class="user-role" id="sidebar-user-role">Administrateur</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Administration</div>
+        <ul>
+<li class="nav-item active">
+            <a href="dashboard.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Tableau de bord</a>
+          </li>
+          <li class="nav-item">
+            <a href="reclamations.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Réclamations</a>
+          </li>
+          <li class="nav-item">
+            <a href="memo.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Mémos agence</a>
+          </li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" id="btn-logout" class="btn btn-ghost">↩ Déconnexion</a>
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <button class="menu-toggle">☰</button>
+        <h1 class="topbar-title">Tableau de bord</h1>
+      </header>
+
+      <div class="page-content">
+        <div class="stats-grid" id="admin-stats"></div>
+
+        <div class="detail-grid">
+          <div class="card">
+            <div class="card-header">
+              <h2>Réclamations récentes</h2>
+              <a href="reclamations.html" class="btn btn-outline btn-sm">Voir tout</a>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Référence</th>
+                      <th>Client</th>
+                      <th>Gravité</th>
+                      <th>Statut</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-admin"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h2>Répartition par gravité</h2></div>
+            <div class="card-body" id="gravity-breakdown"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    const session = App.requireAuth(['admin']);
+    if (!session) throw new Error('Unauthorized');
+
+    const recs = App.reclamations;
+    const stats = {
+      total: recs.length,
+      nouveau: recs.filter(r => r.statut === 'nouveau').length,
+      encours: recs.filter(r => r.statut === 'encours').length,
+      attente: recs.filter(r => r.statut === 'attente').length,
+      resolu: recs.filter(r => r.statut === 'resolu').length,
+      critique: recs.filter(r => r.gravite === 'critique' || r.gravite === 'haute').length
+    };
+
+    document.getElementById('admin-stats').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-icon blue"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <div><div class="stat-value">${stats.total}</div><div class="stat-label">Total</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div><div class="stat-value">${stats.nouveau}</div><div class="stat-label">Nouvelles</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+        <div><div class="stat-value">${stats.encours}</div><div class="stat-label">En cours</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <div><div class="stat-value">${stats.critique}</div><div class="stat-label">Priorité haute+</div></div>
+      </div>
+    `;
+
+    document.getElementById('recent-admin').innerHTML = recs.slice(0, 5).map(r => `
+      <tr>
+        <td><a href="detail.html?ref=${r.reference}" class="ref-link">${r.reference}</a></td>
+        <td>${r.prenom} ${r.nom}</td>
+        <td><span class="badge ${App.getGraviteBadge(r.gravite)}">${r.gravite_label}</span></td>
+        <td><span class="badge ${App.getStatutBadge(r.statut)}">${r.statut_label}</span></td>
+        <td>${App.formatDate(r.date_creation)}</td>
+      </tr>
+    `).join('');
+
+    const gravites = [
+      { key: 'basse', label: 'Basse', color: 'var(--prio-basse)' },
+      { key: 'moyenne', label: 'Moyenne', color: 'var(--prio-moyenne)' },
+      { key: 'haute', label: 'Haute', color: 'var(--prio-haute)' },
+      { key: 'critique', label: 'Critique', color: 'var(--prio-critique)' }
+    ].map(g => ({ ...g, count: recs.filter(r => r.gravite === g.key).length }));
+
+    let position = 0;
+    const gradient = gravites.map(g => {
+      const start = position;
+      position += recs.length ? (g.count / recs.length) * 100 : 0;
+      return `${g.color} ${start}% ${position}%`;
+    }).join(', ');
+
+    document.getElementById('gravity-breakdown').innerHTML = `
+      <div class="gravity-chart">
+        <div class="donut-chart" data-total="${recs.length}" style="background:conic-gradient(${gradient || 'var(--border-light) 0 100%'});"></div>
+        <div class="chart-legend">
+          ${gravites.map(g => `
+            <div class="chart-legend-item">
+              <span class="chart-key"><i class="chart-swatch" style="background:${g.color};"></i>${g.label}</span>
+              <strong>${g.count}</strong>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  </script>
+</body>
+</html>

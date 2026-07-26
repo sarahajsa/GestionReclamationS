@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détail réclamation — Admin</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <img src="../assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+        </div>
+      </div>
+      <div class="sidebar-user">
+<div class="user-avatar" id="sidebar-user-avatar">A1</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Admin 1</div>
+          <div class="user-role" id="sidebar-user-role">Administrateur</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Administration</div>
+        <ul>
+<li class="nav-item">
+            <a href="dashboard.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Tableau de bord</a>
+          </li>
+          <li class="nav-item active">
+            <a href="reclamations.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Réclamations</a>
+          </li>
+          <li class="nav-item">
+            <a href="memo.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Mémos agence</a>
+          </li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" id="btn-logout" class="btn btn-ghost">↩ Déconnexion</a>
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <button class="menu-toggle">☰</button>
+        <h1 class="topbar-title" id="page-title">Détail réclamation</h1>
+        <div class="topbar-actions">
+          <a href="reclamations.html" class="btn btn-outline btn-sm">← Retour</a>
+        </div>
+      </header>
+
+      <div class="page-content" id="detail-content">
+        <!-- Rempli par JS -->
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    const session = App.requireAuth(['admin']);
+    if (!session) throw new Error('Unauthorized');
+
+    const ref = new URLSearchParams(window.location.search).get('ref');
+    const rec = App.reclamations.find(r => r.reference === ref);
+
+    if (!rec) {
+      document.getElementById('detail-content').innerHTML = `
+        <div class="empty-state">
+          <h3>Réclamation introuvable</h3>
+          <p>La référence "${ref || ''}" n'existe pas.</p>
+          <a href="reclamations.html" class="btn btn-primary" style="margin-top:16px;">Retour à la liste</a>
+        </div>`;
+      throw new Error('Not found');
+    }
+
+    document.getElementById('page-title').textContent = rec.reference;
+
+    const statusStages = [
+      { id: 'nouveau', title: 'Nouveau', action: 'Réclamation enregistrée' },
+      { id: 'encours', title: 'En cours', action: 'Dossier pris en charge' },
+      { id: 'attente', title: 'En attente', action: 'En attente d’un retour' },
+      { id: 'resolu', title: 'Résolu', action: 'Dossier clôturé avec réponse' },
+      { id: 'rejete', title: 'Rejeté', action: 'Dossier clôturé sans suite favorable' }
+    ];
+
+    function getStatusHistory() {
+      if (!rec.statusHistory) {
+        rec.statusHistory = [{ status: 'nouveau', date: rec.date_creation, action: 'Réclamation enregistrée' }];
+        if (rec.statut !== 'nouveau') {
+          const stage = statusStages.find(item => item.id === rec.statut);
+          rec.statusHistory.push({ status: rec.statut, date: rec.date_modification, action: stage.action });
+        }
+      }
+      return rec.statusHistory;
+    }
+
+    function renderJourney() {
+      const history = getStatusHistory();
+      const container = document.getElementById('journey-steps');
+      container.innerHTML = statusStages.map((step, index) => `
+        <button class="journey-step journey-step--interactive ${rec.statut === step.id ? 'is-current is-complete' : ''}" type="button" data-status="${step.id}" aria-pressed="${rec.statut === step.id}">
+          <span class="journey-marker">${rec.statut === step.id ? '✓' : index + 1}</span>
+          <span><strong>${step.title}</strong><small>${rec.statut === step.id ? 'Statut actuel' : step.action}</small></span>
+        </button>`).join('') + `
+        <div class="journey-history">${history.slice().reverse().map(item => `<div><span class="badge ${App.getStatutBadge(item.status)}">${App.getStatutLabel(item.status)}</span><p>${item.action}</p><small>${App.formatDateTime(item.date)}</small></div>`).join('')}</div>`;
+
+      container.querySelectorAll('[data-status]').forEach(button => {
+        button.addEventListener('click', () => {
+          const nextStatus = button.dataset.status;
+          if (nextStatus === rec.statut && history.length > 1) {
+            history.pop();
+            rec.statut = history[history.length - 1].status;
+          } else if (nextStatus !== rec.statut) {
+            const stage = statusStages.find(item => item.id === nextStatus);
+            history.push({ status: nextStatus, date: new Date().toISOString(), action: stage.action });
+            rec.statut = nextStatus;
+          } else return;
+          rec.statut_label = App.getStatutLabel(rec.statut);
+          rec.date_modification = new Date().toISOString();
+          renderDetail();
+        });
+      });
+    }
+
+    function renderDetail() {
+      document.getElementById('detail-content').innerHTML = `
+        <div class="detail-grid">
+          <div>
+            <div class="card" style="margin-bottom:24px;">
+              <div class="card-header">
+                <div>
+                  <h2 style="font-family:monospace;">${rec.reference}</h2>
+                  <span class="badge ${App.getStatutBadge(rec.statut)}">${rec.statut_label}</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="detail-section">
+                  <h3>Client</h3>
+                  <div class="info-grid">
+                    <div class="info-item"><label>Nom complet</label><span>${rec.prenom} ${rec.nom}</span></div>
+                    <div class="info-item"><label>Portée</label><span>${rec.portee === 'dossier' ? 'Dossier ' + rec.numero_dossier : 'Générale'}</span></div>
+                  </div>
+                </div>
+                <div class="detail-section">
+                  <h3>Réclamation</h3>
+                  <div class="info-grid">
+                    <div class="info-item"><label>Objet</label><span>${rec.objet}</span></div>
+                    <div class="info-item"><label>Type</label><span>${rec.type_label}</span></div>
+                    <div class="info-item"><label>Priorité</label><span class="badge ${App.getGraviteBadge(rec.gravite)}">${rec.gravite_label}</span></div>
+                    <div class="info-item"><label>Date de dépôt</label><span>${App.formatDateTime(rec.date_creation)}</span></div>
+                  </div>
+                </div>
+                <div class="detail-section">
+                  <h3>Description</h3>
+                  <div class="detail-text">${rec.detail}</div>
+                </div>
+                ${rec.piece_jointe ? `
+                <div class="detail-section">
+                  <h3>Pièce jointe</h3>
+                  <table class="attachment-table">
+                    <thead><tr><th>Nom du fichier</th><th>Type</th><th>Taille</th><th></th></tr></thead>
+                    <tbody><tr>
+                      <td class="attachment-name">${rec.piece_jointe}</td>
+                      <td>${rec.piece_jointe.split('.').pop().toUpperCase()}</td>
+                      <td>248 Ko</td>
+                      <td><span class="attachment-actions"><a class="btn btn-outline btn-sm" href="../uploads/${rec.piece_jointe}" target="_blank">Ouvrir</a><a class="btn btn-primary btn-sm" href="../uploads/${rec.piece_jointe}" download>Télécharger</a></span></td>
+                    </tr></tbody>
+                  </table>
+                </div>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card journey-card" style="margin-bottom:24px;">
+              <div class="card-header"><h3>Parcours de la réclamation</h3></div>
+              <div class="card-body">
+                <p class="journey-caption">Cliquez sur une étape pour la valider ou l'annuler.</p>
+                <div class="journey-steps" id="journey-steps"></div>
+              </div>
+            </div>
+
+            <!-- Mémos -->
+            <div class="card memo-card" id="memo-card">
+              <div class="card-header"><h3>Mémos</h3></div>
+              <div class="card-body">
+                <button class="btn btn-outline btn-sm memo-toggle" id="btn-toggle-memos" type="button" aria-expanded="false">Afficher les mémos (${rec.memos.length})</button>
+                <div class="memo-content" id="memo-content"><div class="memo-content-inner">
+                <div class="timeline" id="memos-list">
+                  ${rec.memos.length === 0 ? '' : rec.memos.map(m => `
+                    <div class="timeline-item">
+                      <div class="timeline-dot"></div>
+                      <div class="timeline-header">
+                        <span class="timeline-author">${m.auteur}</span>
+                        <span class="badge badge-${m.role === 'admin' ? 'encours' : 'attente'}" style="font-size:11px;">${m.role === 'admin' ? 'Admin' : 'Agence'}</span>
+                        <span class="timeline-date">${App.formatDateTime(m.date)}</span>
+                      </div>
+                      <div class="timeline-body">${m.message}</div>
+                    </div>
+                  `).join('')}
+                </div>
+                ${rec.memos.length === 0 ? '<p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Aucun mémo.</p>' : ''}
+
+                <div class="memo-form">
+                  <div class="form-group">
+                    <label class="form-label">Ajouter un mémo</label>
+                    <textarea class="form-control" id="memo-text" placeholder="Message pour l'agence ou note interne..." rows="3"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Destinataire</label>
+                    <select class="form-control" id="memo-dest">
+                      <option value="agence">Agence</option>
+                      <option value="admin">Note interne</option>
+                    </select>
+                  </div>
+                  <button class="btn btn-accent btn-sm" id="btn-add-memo">Envoyer le mémo</button>
+                </div>
+                </div></div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+
+      renderJourney();
+
+      const memoCard = document.getElementById('memo-card');
+      const toggleMemos = document.getElementById('btn-toggle-memos');
+      toggleMemos.addEventListener('click', () => {
+        const isOpen = memoCard.classList.toggle('is-open');
+        toggleMemos.setAttribute('aria-expanded', String(isOpen));
+        toggleMemos.textContent = `${isOpen ? 'Masquer' : 'Afficher'} les mémos (${rec.memos.length})`;
+      });
+
+      document.getElementById('btn-add-memo').addEventListener('click', () => {
+        const text = document.getElementById('memo-text').value.trim();
+        if (!text) return;
+        const dest = document.getElementById('memo-dest').value;
+        rec.memos.push({
+          auteur: `${session.prenom} ${session.nom}`,
+          role: dest === 'agence' ? 'admin' : 'admin',
+          date: new Date().toISOString(),
+          message: text
+        });
+        rec.date_modification = new Date().toISOString();
+        App.showToast('Mémo ajouté');
+        renderDetail();
+      });
+    }
+
+    renderDetail();
+  </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord — Client</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <img src="../assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+        </div>
+      </div>
+      <div class="sidebar-user">
+<div class="user-avatar" id="sidebar-user-avatar">C1</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Client 1</div>
+          <div class="user-role" id="sidebar-user-role">Client</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Menu</div>
+        <ul>
+<li class="nav-item active">
+            <a href="dashboard.html"><span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Tableau de bord</a>
+          </li>
+          <li class="nav-item">
+            <a href="deposer.html"><span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span> Déposer réclamation</a>
+          </li>
+          <li class="nav-item">
+            <a href="suivre.html"><span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span> Suivre réclamations</a>
+          </li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" id="btn-logout" class="btn btn-ghost">↩ Déconnexion</a>
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <button class="menu-toggle">☰</button>
+        <h1 class="topbar-title">Tableau de bord</h1>
+      </header>
+
+      <div class="page-content">
+        <div class="stats-grid" id="client-stats"></div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Réclamations récentes</h2>
+            <a href="deposer.html" class="btn btn-accent btn-sm">+ Nouvelle réclamation</a>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Référence</th>
+                    <th>Objet</th>
+                    <th>Gravité</th>
+                    <th>Statut</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-reclamations"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    const session = App.requireAuth(['client']);
+    if (!session) throw new Error('Unauthorized');
+
+    const myRecs = App.reclamations.filter(r => r.client_id === 'client');
+
+    const stats = {
+      total: myRecs.length,
+      encours: myRecs.filter(r => r.statut === 'encours' || r.statut === 'nouveau').length,
+      attente: myRecs.filter(r => r.statut === 'attente').length,
+      resolu: myRecs.filter(r => r.statut === 'resolu').length
+    };
+
+    document.getElementById('client-stats').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-icon blue"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <div><div class="stat-value">${stats.total}</div><div class="stat-label">Total réclamations</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div><div class="stat-value">${stats.encours}</div><div class="stat-label">En cours</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div><div class="stat-value">${stats.resolu}</div><div class="stat-label">Résolues</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div><div class="stat-value">${stats.attente}</div><div class="stat-label">En attente</div></div>
+      </div>
+    `;
+
+    const tbody = document.getElementById('recent-reclamations');
+    if (myRecs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>Aucune réclamation pour le moment.</p></div></td></tr>`;
+    } else {
+      tbody.innerHTML = myRecs.slice(0, 5).map(r => `
+        <tr>
+          <td><a href="suivre.html?ref=${r.reference}" class="ref-link">${r.reference}</a></td>
+          <td>${r.objet}</td>
+          <td><span class="badge ${App.getGraviteBadge(r.gravite)}">${r.gravite_label}</span></td>
+          <td><span class="badge ${App.getStatutBadge(r.statut)}">${r.statut_label}</span></td>
+          <td>${App.formatDate(r.date_creation)}</td>
+        </tr>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

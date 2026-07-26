@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Déposer une réclamation — Client</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <img src="../assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+        </div>
+      </div>
+      <div class="sidebar-user">
+<div class="user-avatar" id="sidebar-user-avatar">C1</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Client 1</div>
+          <div class="user-role" id="sidebar-user-role">Client</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Menu</div>
+        <ul>
+          <li class="nav-item">
+            <a href="dashboard.html"><span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Tableau de bord</a>
+          </li>
+          <li class="nav-item active">
+            <a href="deposer.html"><span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span> Déposer réclamation</a>
+          </li>
+          <li class="nav-item">
+            <a href="suivre.html"><span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span> Suivre réclamations</a>
+          </li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" id="btn-logout" class="btn btn-ghost">↩ Déconnexion</a>
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <button class="menu-toggle">☰</button>
+        <h1 class="topbar-title">Déposer une réclamation</h1>
+      </header>
+
+      <div class="page-content">
+        <div class="card">
+          <div class="card-header">
+            <h2>Formulaire de réclamation crédit</h2>
+          </div>
+          <div class="card-body">
+            <form id="reclamation-form">
+
+              <!-- Infos client (pré-remplies) -->
+              <div class="detail-section">
+                <h3>Informations client</h3>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Nom</label>
+                    <input type="text" class="form-control" id="nom" readonly>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Prénom</label>
+                    <input type="text" class="form-control" id="prenom" readonly>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">CIN</label>
+                    <input type="text" class="form-control" id="cin" readonly>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Téléphone</label>
+                    <input type="text" class="form-control" id="telephone" readonly>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">E-mail</label>
+                    <input type="email" class="form-control" id="email_display" readonly>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">N° Compte</label>
+                    <input type="text" class="form-control" id="numero_compte" readonly>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Portée -->
+              <div class="detail-section">
+                <h3>Portée de la réclamation</h3>
+                <div class="radio-group">
+                  <label class="radio-card active" data-portee="general">
+                    <input type="radio" name="portee" value="general" checked>
+                    <div class="radio-card-title">Générale</div>
+                    <div class="radio-card-desc">Réclamation sans dossier spécifique</div>
+                  </label>
+                  <label class="radio-card" data-portee="dossier">
+                    <input type="radio" name="portee" value="dossier">
+                    <div class="radio-card-title">Par dossier</div>
+                    <div class="radio-card-desc">Liée à un dossier crédit</div>
+                  </label>
+                </div>
+                <div class="form-group" id="dossier-group" style="display:none; margin-top:16px;">
+                  <label class="form-label" for="numero_dossier">Numéro de dossier <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="numero_dossier" placeholder="Ex: CRD-2025-8891">
+                  <span class="form-error">Veuillez saisir le numéro de dossier</span>
+                </div>
+              </div>
+
+              <!-- Détails réclamation -->
+              <div class="detail-section">
+                <h3>Détails de la réclamation</h3>
+                <div class="form-group">
+                  <label class="form-label" for="objet">Objet <span class="required">*</span></label>
+                  <select class="form-control" id="objet" required>
+                    <option value="">— Sélectionner —</option>
+                    <option value="Retard de traitement dossier crédit">Retard de traitement dossier crédit</option>
+                    <option value="Erreur sur montant / mensualité">Erreur sur montant / mensualité</option>
+                    <option value="Demande de rééchelonnement">Demande de rééchelonnement</option>
+                    <option value="Refus de crédit">Refus de crédit</option>
+                    <option value="Problème de taux d'intérêt">Problème de taux d'intérêt</option>
+                    <option value="Problème de délai de traitement">Problème de délai de traitement</option>
+                    <option value="Demande d'information">Demande d'information</option>
+                    <option value="autre">Autre (précisez)</option>
+                  </select>
+                  <span class="form-error">L'objet est obligatoire</span>
+                  <div class="autre-field" id="objet-autre-field">
+                    <label class="form-label" for="objet_autre">Précisez votre objet <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="objet_autre" placeholder="Saisissez votre objet...">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="type">Type de crédit <span class="required">*</span></label>
+                    <select class="form-control" id="type" required>
+                      <option value="">— Sélectionner —</option>
+                      <option value="credit_immobilier">Crédit immobilier</option>
+                      <option value="credit_auto">Crédit auto</option>
+                      <option value="credit_conso">Crédit consommation</option>
+                      <option value="credit_professionnel">Crédit professionnel</option>
+                      <option value="autre">Autre</option>
+                    </select>
+                    <span class="form-error">Veuillez sélectionner un type</span>
+                    <div class="autre-field" id="type-autre-field">
+                      <label class="form-label" for="type_autre">Précisez le type <span class="required">*</span></label>
+                      <input type="text" class="form-control" id="type_autre" placeholder="Ex: Crédit étudiant, Crédit équipement...">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="gravite">Niveau de gravité <span class="required">*</span></label>
+                    <select class="form-control" id="gravite" required>
+                      <option value="">— Sélectionner —</option>
+                      <option value="basse">Basse</option>
+                      <option value="moyenne">Moyenne</option>
+                      <option value="haute">Haute</option>
+                      <option value="critique">Critique</option>
+                    </select>
+                    <span class="form-error">Veuillez sélectionner un niveau</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="detail">Description détaillée <span class="required">*</span></label>
+                  <textarea class="form-control" id="detail" placeholder="Décrivez votre réclamation en détail..." required></textarea>
+                  <span class="form-error">La description est obligatoire</span>
+                </div>
+              </div>
+
+              <!-- Pièce jointe -->
+              <div class="detail-section">
+                <h3>Pièce jointe</h3>
+                <div class="file-upload" id="file-upload">
+                  <input type="file" id="piece_jointe" accept=".pdf,.jpg,.jpeg,.png">
+                  <div class="file-upload-icon">📎</div>
+                  <div class="file-upload-text">
+                    Glissez un fichier ici ou <strong>parcourir</strong><br>
+                    <small>PDF, JPG, PNG — Max 5 Mo</small>
+                  </div>
+                </div>
+                <div id="file-preview"></div>
+              </div>
+
+            </form>
+          </div>
+          <div class="card-footer">
+            <a href="dashboard.html" class="btn btn-outline">Annuler</a>
+            <button type="submit" form="reclamation-form" class="btn btn-accent">Envoyer la réclamation</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal confirmation -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Réclamation envoyée</h3>
+        <button class="btn-icon" id="close-modal">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <div style="font-size:48px; margin-bottom:16px;">✅</div>
+        <p>Votre réclamation a été enregistrée avec succès.</p>
+        <p style="margin-top:12px; font-size:18px; font-weight:600; color:var(--primary);" id="modal-ref"></p>
+        <p style="font-size:13px; color:var(--text-muted); margin-top:8px;">Conservez cette référence pour le suivi.</p>
+      </div>
+      <div class="modal-footer">
+        <a href="suivre.html" class="btn btn-primary" id="btn-go-suivre">Suivre mes réclamations</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    const session = App.requireAuth(['client']);
+    if (!session) throw new Error('Unauthorized');
+
+    // Pré-remplir les champs client
+    document.getElementById('nom').value = session.nom;
+    document.getElementById('prenom').value = session.prenom;
+    document.getElementById('cin').value = session.cin;
+    document.getElementById('telephone').value = session.telephone;
+    document.getElementById('email_display').value = session.email_display;
+    document.getElementById('numero_compte').value = session.numero_compte;
+
+    // Objet "Autre" toggle
+    const objetSelect = document.getElementById('objet');
+    const objetAutreField = document.getElementById('objet-autre-field');
+    objetSelect.addEventListener('change', () => {
+      objetAutreField.classList.toggle('visible', objetSelect.value === 'autre');
+    });
+
+    // Type "Autre" toggle
+    const typeSelect = document.getElementById('type');
+    const typeAutreField = document.getElementById('type-autre-field');
+    typeSelect.addEventListener('change', () => {
+      typeAutreField.classList.toggle('visible', typeSelect.value === 'autre');
+    });
+
+    // Portée toggle
+    document.querySelectorAll('.radio-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        const portee = card.dataset.portee;
+        document.getElementById('dossier-group').style.display = portee === 'dossier' ? 'block' : 'none';
+      });
+    });
+
+    // File upload
+    const fileInput = document.getElementById('piece_jointe');
+    const fileUpload = document.getElementById('file-upload');
+    const filePreview = document.getElementById('file-preview');
+    let selectedFile = null;
+
+    fileUpload.addEventListener('click', () => fileInput.click());
+    fileUpload.addEventListener('dragover', (e) => { e.preventDefault(); fileUpload.classList.add('dragover'); });
+    fileUpload.addEventListener('dragleave', () => fileUpload.classList.remove('dragover'));
+    fileUpload.addEventListener('drop', (e) => {
+      e.preventDefault();
+      fileUpload.classList.remove('dragover');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+
+    function handleFile(file) {
+      const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+      if (!allowed.includes(file.type)) {
+        App.showToast('Format non accepté. Utilisez PDF, JPG ou PNG.', 'error');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        App.showToast('Fichier trop volumineux (max 5 Mo)', 'error');
+        return;
+      }
+      selectedFile = file;
+      filePreview.innerHTML = `
+        <div class="file-preview">
+          <span>📄</span>
+          <span>${file.name} (${(file.size / 1024).toFixed(1)} Ko)</span>
+          <span class="remove-file" id="remove-file">&times;</span>
+        </div>`;
+      document.getElementById('remove-file').addEventListener('click', () => {
+        selectedFile = null;
+        filePreview.innerHTML = '';
+        fileInput.value = '';
+      });
+    }
+
+    // Validation & Submit
+    document.getElementById('reclamation-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      let valid = true;
+
+      ['objet', 'type', 'gravite', 'detail'].forEach(id => {
+        const group = document.getElementById(id).closest('.form-group');
+        if (!document.getElementById(id).value.trim()) {
+          group.classList.add('has-error');
+          valid = false;
+        } else {
+          group.classList.remove('has-error');
+        }
+      });
+
+      const portee = document.querySelector('input[name="portee"]:checked').value;
+      if (portee === 'dossier' && !document.getElementById('numero_dossier').value.trim()) {
+        document.getElementById('dossier-group').classList.add('has-error');
+        valid = false;
+      } else {
+        document.getElementById('dossier-group').classList.remove('has-error');
+      }
+
+      if (!valid) return;
+
+      const objetValue = document.getElementById('objet').value === 'autre'
+        ? document.getElementById('objet_autre').value.trim()
+        : document.getElementById('objet').value;
+
+      const typeValue = document.getElementById('type').value === 'autre'
+        ? 'autre'
+        : document.getElementById('type').value;
+
+      const typeLabelValue = document.getElementById('type').value === 'autre'
+        ? document.getElementById('type_autre').value.trim()
+        : App.getTypeLabel(document.getElementById('type').value);
+
+      if (document.getElementById('objet').value === 'autre' && !document.getElementById('objet_autre').value.trim()) {
+        document.getElementById('objet_autre').closest('.form-group').classList.add('has-error');
+        return;
+      }
+
+      const ref = App.generateReference();
+      const now = new Date().toISOString();
+      const rec = {
+        id: App.reclamations.length + 1,
+        reference: ref,
+        client_id: 'client',
+        nom: session.nom,
+        prenom: session.prenom,
+        objet: objetValue,
+        type: typeValue,
+        type_label: typeLabelValue,
+        gravite: document.getElementById('gravite').value,
+        gravite_label: App.getGraviteLabel(document.getElementById('gravite').value),
+        statut: 'nouveau',
+        statut_label: 'Nouveau',
+        portee: portee,
+        numero_dossier: portee === 'dossier' ? document.getElementById('numero_dossier').value.trim() : null,
+        detail: document.getElementById('detail').value.trim(),
+        piece_jointe: selectedFile ? selectedFile.name : null,
+        date_creation: now,
+        date_modification: now,
+        memos: []
+      };
+
+      App.reclamations.unshift(rec);
+      document.getElementById('modal-ref').textContent = ref;
+      document.getElementById('confirm-modal').classList.add('active');
+      document.getElementById('reclamation-form').reset();
+      filePreview.innerHTML = '';
+      selectedFile = null;
+      document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('active'));
+      document.querySelector('.radio-card[data-portee="general"]').classList.add('active');
+      document.getElementById('dossier-group').style.display = 'none';
+      // Re-préremplir
+      document.getElementById('nom').value = session.nom;
+      document.getElementById('prenom').value = session.prenom;
+      document.getElementById('cin').value = session.cin;
+      document.getElementById('telephone').value = session.telephone;
+      document.getElementById('email_display').value = session.email_display;
+      document.getElementById('numero_compte').value = session.numero_compte;
+    });
+
+    document.getElementById('close-modal').addEventListener('click', () => {
+      document.getElementById('confirm-modal').classList.remove('active');
+    });
+  </script>
+</body>
+</html>
