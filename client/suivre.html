@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Suivre mes réclamations — Client</title>
   <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/journey.css">
 </head>
 <body>
 
@@ -123,7 +124,7 @@
               <aside class="card journey-card">
                 <div class="card-header"><h3>Parcours de la réclamation</h3></div>
                 <div class="card-body">
-                  <p class="journey-caption">Suivez l’avancement de votre dossier.</p>
+                  <p class="journey-caption">Suivez l'avancement de votre dossier.</p>
                   <div class="journey-steps" id="client-journey-steps"></div>
                 </div>
               </aside>
@@ -144,19 +145,52 @@
     const clientJourneyStages = [
       { id: 'nouveau', title: 'Nouveau', action: 'Réclamation enregistrée' },
       { id: 'encours', title: 'En cours', action: 'Dossier pris en charge' },
-      { id: 'attente', title: 'En attente', action: 'En attente d’un retour' },
+      { id: 'attente', title: 'En attente', action: 'En attente d\'un retour' },
       { id: 'resolu', title: 'Résolu', action: 'Dossier clôturé avec réponse' },
       { id: 'rejete', title: 'Rejeté', action: 'Dossier clôturé sans suite favorable' }
     ];
 
     function renderClientJourney(rec) {
-      const history = rec.statusHistory || [{ status: 'nouveau', date: rec.date_creation, action: 'Réclamation enregistrée' }, ...(rec.statut !== 'nouveau' ? [{ status: rec.statut, date: rec.date_modification, action: clientJourneyStages.find(item => item.id === rec.statut).action }] : [])];
-      document.getElementById('client-journey-steps').innerHTML = clientJourneyStages.map((step, index) => `
-        <div class="journey-step ${rec.statut === step.id ? 'is-complete is-current' : ''}">
-          <span class="journey-marker">${rec.statut === step.id ? '✓' : index + 1}</span>
-          <span><strong>${step.title}</strong><small>${rec.statut === step.id ? 'Statut actuel' : step.action}</small></span>
-        </div>`).join('') + `
-        <div class="journey-history">${history.slice().reverse().map(item => `<div><span class="badge ${App.getStatutBadge(item.status)}">${App.getStatutLabel(item.status)}</span><p>${item.action}</p><small>${App.formatDateTime(item.date)}</small></div>`).join('')}</div>`;
+      const history = rec.statusHistory || [{ 
+        status: 'nouveau', 
+        date: rec.date_creation, 
+        action: 'Réclamation enregistrée',
+        auteur: 'Système',
+        role: 'system'
+      }, ...(rec.statut !== 'nouveau' ? [{ 
+        status: rec.statut, 
+        date: rec.date_modification, 
+        action: clientJourneyStages.find(item => item.id === rec.statut).action,
+        auteur: 'Administrateur',
+        role: 'admin'
+      }] : [])];
+      
+      // Créer un map pour accéder rapidement aux informations d'historique
+      const historyMap = {};
+      history.forEach(item => {
+        historyMap[item.status] = item;
+      });
+
+      document.getElementById('client-journey-steps').innerHTML = clientJourneyStages.map((step, index) => {
+        const historyItem = historyMap[step.id];
+        const isComplete = historyItem !== undefined;
+        const isCurrent = rec.statut === step.id;
+        
+        return `
+        <div class="journey-step ${isCurrent ? 'is-current' : ''} ${isComplete ? 'is-complete' : ''}">
+          <span class="journey-marker">${isComplete ? '✓' : index + 1}</span>
+          <div class="journey-step-info">
+            <span><strong>${step.title}</strong></span>
+            <small>${isCurrent ? 'Statut actuel' : step.action}</small>
+            ${historyItem ? `
+              <div class="journey-step-meta">
+                <span class="journey-step-date">${App.formatDateTime(historyItem.date)}</span>
+                <span class="journey-step-author">Par ${historyItem.auteur}</span>
+              </div>
+            ` : ''}
+          </div>
+        </div>`;
+      }).join('');
     }
 
     function renderList(filter = '') {
@@ -186,41 +220,55 @@
         </tr>
       `).join('');
 
-      tbody.querySelectorAll('[data-ref]').forEach(el => {
-        el.addEventListener('click', (e) => {
+      // Gérer les clics sur les références
+      tbody.querySelectorAll('.ref-link').forEach(link => {
+        link.addEventListener('click', (e) => {
           e.preventDefault();
-          showDetail(el.dataset.ref);
+          const ref = link.dataset.ref;
+          const rec = myRecs.find(r => r.reference === ref);
+          if (rec) showDetail(rec);
+        });
+      });
+
+      tbody.querySelectorAll('[data-ref]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const ref = btn.dataset.ref;
+          const rec = myRecs.find(r => r.reference === ref);
+          if (rec) showDetail(rec);
         });
       });
     }
 
-    function showDetail(ref) {
-      const rec = myRecs.find(r => r.reference === ref);
-      if (!rec) return;
+    function showDetail(rec) {
+      listView.style.display = 'none';
+      detailView.style.display = 'block';
 
       document.getElementById('detail-ref').textContent = rec.reference;
-      const statutEl = document.getElementById('detail-statut');
-      statutEl.textContent = rec.statut_label;
-      statutEl.className = 'badge ' + App.getStatutBadge(rec.statut);
+      document.getElementById('detail-statut').textContent = rec.statut_label;
+      document.getElementById('detail-statut').className = `badge ${App.getStatutBadge(rec.statut)}`;
       document.getElementById('detail-objet').textContent = rec.objet;
       document.getElementById('detail-type').textContent = rec.type_label;
-      document.getElementById('detail-gravite').innerHTML = `<span class="badge ${App.getGraviteBadge(rec.gravite)}">${rec.gravite_label}</span>`;
-      document.getElementById('detail-portee').textContent = rec.portee === 'dossier' ? `Dossier ${rec.numero_dossier}` : 'Générale';
+      document.getElementById('detail-gravite').textContent = rec.gravite_label;
+      document.getElementById('detail-gravite').className = `badge ${App.getGraviteBadge(rec.gravite)}`;
+      document.getElementById('detail-portee').textContent = rec.portee === 'dossier' ? 'Dossier ' + rec.numero_dossier : 'Générale';
       document.getElementById('detail-date').textContent = App.formatDateTime(rec.date_creation);
       document.getElementById('detail-update').textContent = App.formatDateTime(rec.date_modification);
       document.getElementById('detail-text').textContent = rec.detail;
-      renderClientJourney(rec);
 
       const pjSection = document.getElementById('detail-pj-section');
       if (rec.piece_jointe) {
         pjSection.style.display = 'block';
-        document.getElementById('detail-pj').innerHTML = `<span>📄</span><span>${rec.piece_jointe}</span>`;
+        document.getElementById('detail-pj').innerHTML = `
+          <div class="file-preview">
+            <span>📎 ${rec.piece_jointe}</span>
+            <a href="../uploads/${rec.piece_jointe}" target="_blank" class="btn btn-outline btn-sm">Ouvrir</a>
+          </div>
+        `;
       } else {
         pjSection.style.display = 'none';
       }
 
-      listView.style.display = 'none';
-      detailView.style.display = 'block';
+      renderClientJourney(rec);
     }
 
     document.getElementById('btn-back').addEventListener('click', () => {
@@ -232,10 +280,6 @@
     document.getElementById('filter-statut').addEventListener('change', () => renderList(document.getElementById('search-input').value));
 
     renderList();
-
-    // Auto-open detail if ref in URL
-    const urlRef = new URLSearchParams(window.location.search).get('ref');
-    if (urlRef) showDetail(urlRef);
   </script>
 </body>
 </html>

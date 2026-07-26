@@ -74,9 +74,16 @@
             </div>
           </div>
 
-          <div class="card">
-            <div class="card-header"><h2>Répartition par gravité</h2></div>
-            <div class="card-body" id="gravity-breakdown"></div>
+          <div class="charts-column">
+            <div class="card" style="margin-bottom:24px;">
+              <div class="card-header"><h2>Répartition par gravité</h2></div>
+              <div class="card-body" id="gravity-breakdown"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><h2>Répartition par statut</h2></div>
+              <div class="card-body" id="status-breakdown"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -149,6 +156,34 @@
             <div class="chart-legend-item">
               <span class="chart-key"><i class="chart-swatch" style="background:${g.color};"></i>${g.label}</span>
               <strong>${g.count}</strong>
+            </div>`).join('')}
+        </div>
+      </div>`;
+
+    // Nouveau diagramme de répartition par statut
+    const statuses = [
+      { key: 'nouveau', label: 'Nouveau', color: 'var(--status-nouveau)' },
+      { key: 'encours', label: 'En cours', color: 'var(--status-encours)' },
+      { key: 'attente', label: 'En attente', color: 'var(--status-attente)' },
+      { key: 'resolu', label: 'Résolu', color: 'var(--status-resolu)' },
+      { key: 'rejete', label: 'Rejeté', color: 'var(--status-rejete)' }
+    ].map(s => ({ ...s, count: recs.filter(r => r.statut === s.key).length }));
+
+    let statusPosition = 0;
+    const statusGradient = statuses.map(s => {
+      const start = statusPosition;
+      statusPosition += recs.length ? (s.count / recs.length) * 100 : 0;
+      return `${s.color} ${start}% ${statusPosition}%`;
+    }).join(', ');
+
+    document.getElementById('status-breakdown').innerHTML = `
+      <div class="gravity-chart">
+        <div class="donut-chart" data-total="${recs.length}" style="background:conic-gradient(${statusGradient || 'var(--border-light) 0 100%'});"></div>
+        <div class="chart-legend">
+          ${statuses.map(s => `
+            <div class="chart-legend-item">
+              <span class="chart-key"><i class="chart-swatch" style="background:${s.color};"></i>${s.label}</span>
+              <strong>${s.count}</strong>
             </div>`).join('')}
         </div>
       </div>`;

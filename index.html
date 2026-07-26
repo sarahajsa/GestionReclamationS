@@ -4,55 +4,116 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BMCE Bank — Gestion des Réclamations</title>
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/landing.css">
 </head>
 <body>
 
   <header class="landing-header">
     <div class="logo">
-      <img src="assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+      <img src="assets/img/logo-bmce.svg" alt="BMCE Bank" class="logo-img">
     </div>
-    <div class="landing-header-actions"><span>Plateforme de réclamations</span><a href="login.html" class="btn btn-primary btn-sm">Connexion</a></div>
+    <div class="landing-header-actions">
+      <span>Plateforme de réclamations</span>
+      <a href="login.html" class="btn btn-primary btn-sm">Connexion</a>
+    </div>
   </header>
 
   <main class="landing-main">
     <div class="hero">
-      <span class="hero-badge">BANK OF AFRICA MAROC</span>
-      <h1>Vos réclamations, suivies avec clarté.</h1>
-      <p>
-        Déposez, consultez et suivez chaque étape de votre dossier crédit dans un espace sécurisé.
-      </p>
-      <div class="hero-actions">
-        <a href="login.html?action=deposer" class="btn btn-accent btn-lg">
-          Déposer une réclamation
-        </a>
-        <a href="login.html?action=suivre" class="btn btn-outline btn-lg">
-          Suivre mes réclamations
-        </a>
+      <div class="hero-content">
+        <span class="hero-badge">BANK OF AFRICA MAROC</span>
+        <h1>Vos réclamations, suivies avec <em>clarté</em>.</h1>
+        <p>
+          Déposez, consultez et suivez chaque étape de votre dossier crédit dans un espace sécurisé.
+        </p>
+        <div class="hero-actions">
+          <a href="login.html?action=deposer" class="btn btn-accent btn-lg">
+            Déposer une réclamation
+          </a>
+          <a href="login.html?action=suivre" class="btn btn-outline btn-lg">
+            Suivre mes réclamations
+          </a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="visual-circle"></div>
+        <div class="visual-circle visual-circle-sm"></div>
+      </div>
+    </div>
+
+    <div class="hero-meta">
+      <div>
+        <strong>48 h</strong>
+        <span>Délai moyen de première réponse</span>
+      </div>
+      <div>
+        <strong>100 %</strong>
+        <span>Dossiers traçables de bout en bout</span>
+      </div>
+      <div>
+        <strong>24/7</strong>
+        <span>Consultation de vos réclamations</span>
       </div>
     </div>
   </main>
-      <span class="feature-number">01</span>
+
   <section class="landing-features">
-    <div class="feature-item">
-      <span class="feature-number">02</span>
-      <h3>Dépôt simplifié</h3>
-      <p>Formulaire guidé avec pré-remplissage automatique de vos informations.</p>
+    <div class="section-head">
+      <span class="section-eyebrow">Comment ça marche</span>
+      <h2>Un parcours réclamation transparent</h2>
+      <p>Trois piliers pour un traitement rapide, traçable et sans friction de vos dossiers.</p>
     </div>
-    <div class="feature-item">
-      <span class="feature-number">03</span>
-      <h3>Suivi en temps réel</h3>
-      <p>Consultez l'état de vos réclamations à tout moment via votre référence.</p>
-    </div>
-    <div class="feature-item">
-     
-      <h3>Communication directe</h3>
-      <p>Échanges entre vous, l'administration et votre agence via mémos.</p>
+    <div class="features-container">
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </div>
+        <div class="feature-content">
+          <h3>Dépôt simplifié</h3>
+          <p>Formulaire guidé avec pré-remplissage automatique de vos informations.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+        <div class="feature-content">
+          <h3>Suivi en temps réel</h3>
+          <p>Consultez l'état de vos réclamations à tout moment via votre référence.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+          </svg>
+        </div>
+        <div class="feature-content">
+          <h3>Communication directe</h3>
+          <p>Échanges entre vous, l'administration et votre agence via mémos.</p>
+        </div>
+      </div>
     </div>
   </section>
 
   <footer class="landing-footer">
-    &copy; 2026 BMCE Bank — Tous droits réservés
+    <div class="footer-content">
+      <p>&copy; 2026 BMCE Bank — Tous droits réservés</p>
+      <div class="footer-links">
+        <a href="#">Mentions légales</a>
+        <a href="#">Politique de confidentialité</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
   </footer>
 
 </body>
