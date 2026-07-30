@@ -12,7 +12,7 @@
    ========================================================================== */
 :root {
   /* — Marque : navy — */
-  --navy-950: #0a1633;
+  --navy-950: #003b6f;
   --navy-900: #10214a;
   --navy-800: #172c5e;
   --navy-700: #1f3a75;
@@ -29,7 +29,7 @@
   --teal-50: #e6faf8;
 
   /* — Neutres — */
-  --ink: #131a26;
+  --ink: #19325c;
   --ink-2: #46536b;
   --ink-3: #7b869b;
   --line: #e6eaf1;
@@ -358,12 +358,22 @@ strong {
   align-items: center;
 }
 
-.logo-img {
-  height: 30px;
-  width: auto;
-  max-width: 210px;
+/* Logo de l'accueil : traitement indépendant, plus grand et mieux recadré. */
+.landing-header .logo-img {
+  content: url('../../Bank-Of-Africa-BMCE-Group-Emploi-Recrutement-4-removebg-preview.png');
+  width: 220px;
+  height: 60px;
+  max-width: 58vw;
   object-fit: contain;
-  object-position: left center;
+  object-position: center;
+}
+
+.logo-img {
+  width: 214px;
+  height: 48px;
+  max-width: 58vw;
+  object-fit: cover;
+  object-position: center;
 }
 
 .landing-header-actions {
@@ -398,7 +408,10 @@ strong {
   position: relative;
   isolation: isolate;
   color: #fff;
-  background-color: var(--navy-950);
+  background:
+    radial-gradient(circle at 82% 18%, rgba(73, 169, 220, .10), transparent 28%),
+    radial-gradient(circle at 12% 82%, rgba(28, 112, 190, .12), transparent 34%),
+    #123d69;
   overflow: hidden;
 }
 
@@ -682,6 +695,23 @@ strong {
   border-top: 3px solid var(--teal-500);
 }
 
+/* Même fond BMCE que l'écran de connexion pour le contenu et le pied de page. */
+.landing-main,
+.landing-footer {
+  background:
+    radial-gradient(circle at 82% 18%, rgba(73, 169, 220, .10), transparent 28%),
+    radial-gradient(circle at 12% 82%, rgba(28, 112, 190, .12), transparent 34%),
+    #123d69;
+}
+
+/* Héro de l'accueil légèrement plus clair que le login, tout en gardant le thème BMCE. */
+.landing-main {
+  background:
+    radial-gradient(circle at 82% 18%, rgba(73, 169, 220, .10), transparent 28%),
+    radial-gradient(circle at 12% 82%, rgba(28, 112, 190, .12), transparent 34%),
+    #123d69;
+}
+
 .footer-content {
   max-width: var(--wrap);
   margin: 0 auto;
@@ -815,6 +845,7 @@ strong {
 }
 
 @media (max-width: 480px) {
+  .landing-header .logo-img { width: 210px; height: 54px; }
   .landing-header {
     height: 64px;
     padding: 0 1rem;

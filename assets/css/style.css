@@ -241,6 +241,9 @@ select.form-control {
 .badge-attente    { background: #fff5de; color: var(--status-attente); border: 1px solid #ecd49a; }
 .badge-resolu     { background: #e4f4e9; color: var(--status-resolu); border: 1px solid #b8dfc4; }
 .badge-rejete     { background: #fae7e9; color: var(--status-rejete); border: 1px solid #edbcc2; }
+.badge-prise_charge { background: #e7eefc; color: #355f9d; border: 1px solid #bfd0f0; }
+.badge-demande_supplementaire { background: #fae7e9; color: #be3d46; border: 1px solid #edbcc2; }
+.badge-demande_supplementaire::before { content: '⚠ '; }
 
 .badge-basse      { background: #e8f3fa; color: var(--prio-basse); border: 1px solid #c6dfef; }
 .badge-moyenne    { background: #fdf1df; color: var(--prio-moyenne); border: 1px solid #f3d3a7; }
@@ -348,6 +351,16 @@ tbody tr:last-child td { border-bottom: none; }
   width: auto;
   display: block;
 }
+
+/* Identite visuelle Bank of Africa / BMCE Group */
+.sidebar-header .logo-img,
+.login-card .logo-img { height: auto; object-fit: contain; }
+.sidebar-header .logo-img { width: 190px; height: 48px; object-fit: cover; object-position: center; }
+.login-card .logo-img { width: min(280px, 82vw); height: 72px; object-fit: cover; object-position: center; }
+.card, .stat-card, .filters-bar { animation: surface-in .35s ease both; }
+.card:hover { border-color: #c5dbea; box-shadow: var(--shadow-md); }
+.btn:focus-visible, .form-control:focus-visible, .filter-select:focus-visible { outline: 3px solid rgba(22,115,184,.24); outline-offset: 2px; }
+@keyframes surface-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 
 .logo-icon {
   width: 36px; height: 36px;
@@ -632,6 +645,14 @@ tbody tr:last-child td { border-bottom: none; }
 
 .page-content { padding: 28px 30px; }
 
+.chat-box { max-height: 360px; overflow-y: auto; padding: 14px; background: #f7fafc; border: 1px solid var(--border); border-radius: var(--radius); }
+.chat-message { max-width: 82%; margin-bottom: 12px; padding: 10px 13px; border-radius: 12px; line-height: 1.45; white-space: pre-wrap; }
+.chat-message-client { margin-right: auto; background: #e8f3fa; border-bottom-left-radius: 3px; }
+.chat-message-admin { margin-left: auto; background: var(--accent-soft); border-bottom-right-radius: 3px; }
+.chat-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.chat-form { display: flex; gap: 10px; align-items: flex-end; margin-top: 12px; }
+.chat-form textarea { flex: 1; resize: vertical; }
+
 /* ─── Dashboard widgets ─── */
 .stats-grid {
   display: grid;
@@ -703,6 +724,40 @@ tbody tr:last-child td { border-bottom: none; }
 .chart-key { display: inline-flex; align-items: center; gap: 8px; color: var(--text-muted); }
 .chart-swatch { width: 9px; height: 9px; border-radius: 50%; }
 
+/* Répartition des statuts plus lisible dans le dashboard admin. */
+#status-breakdown .gravity-chart {
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 18px;
+}
+#status-breakdown .donut-chart { width: 112px; }
+#status-breakdown .chart-legend {
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+#status-breakdown .chart-legend-item {
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 11px;
+}
+#status-breakdown .chart-key { min-width: 0; }
+#status-breakdown .chart-key { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Logo zoomé et recadré : le texte bleu reste visible sans espace transparent. */
+.sidebar-header .logo-img,
+.sidebar .logo-img {
+  content: url('../../Bank-Of-Africa-BMCE-Group-Emploi-Recrutement-4-removebg-preview.png') !important;
+  width: 280px !important;
+  height: 100px !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  background: transparent !important;
+}
+
 /* ─── Filters bar ─── */
 .filters-bar {
   display: flex;
@@ -751,9 +806,43 @@ tbody tr:last-child td { border-bottom: none; }
 /* ─── Detail page ─── */
 .detail-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 380px);
   gap: 24px;
   align-items: start;
+}
+
+.detail-grid > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detail-grid > div:last-child .memo-card {
+  margin-top: auto;
+}
+
+.detail-grid .journey-card {
+  position: static;
+}
+
+/* Sur l'administration, les mémos sont placés sous le détail, à gauche du parcours. */
+.admin-detail-grid > div:first-child,
+.admin-detail-grid > div:last-child {
+  display: contents;
+}
+.admin-detail-grid > div:last-child .memo-card {
+  margin-top: 0;
+}
+.admin-detail-grid .memo-card {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
+}
+
+.admin-detail-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .client-detail-grid {
@@ -766,6 +855,124 @@ tbody tr:last-child td { border-bottom: none; }
 .journey-card { position: sticky; top: calc(var(--header-h) + 20px); }
 .journey-card .card-header { padding: 16px 18px; }
 .journey-card .card-body { padding: 18px; }
+
+.admin-journey-card .journey-step {
+  position: relative;
+  display: block;
+}
+
+.admin-journey-card .journey-step-content {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 12px;
+  border-radius: var(--radius);
+}
+
+.admin-journey-card .journey-step-info {
+  min-width: 0;
+}
+
+.admin-journey-card .journey-step strong {
+  display: block;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.admin-journey-card .journey-step.is-current strong {
+  color: var(--text);
+}
+
+.admin-journey-card .journey-step small {
+  display: block;
+  color: var(--text-muted);
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-journey-card .journey-step .journey-marker {
+  min-width: 28px;
+  min-height: 28px;
+}
+
+.admin-journey-card .journey-step--interactive {
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.admin-journey-card .journey-step--interactive:hover {
+  background: rgba(8, 121, 189, 0.06);
+}
+
+.admin-journey-card .journey-step--interactive:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.admin-journey-card .journey-step--interactive .journey-marker,
+.admin-journey-card .journey-step.is-next .journey-marker {
+  cursor: pointer;
+}
+
+.admin-journey-card .journey-step.is-next .journey-marker {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(8, 121, 189, 0.1);
+}
+
+.admin-journey-card .journey-step.is-future .journey-marker {
+  opacity: 0.5;
+}
+
+.admin-journey-card .journey-step--locked {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.admin-journey-card .journey-step--locked:hover {
+  background: transparent;
+}
+
+.admin-journey-card .journey-step-content[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-journey-card .journey-step-content {
+  width: 100%;
+  text-align: left;
+}
+
+.admin-journey-card .journey-step:not(:last-child)::after {
+  left: 13px;
+  pointer-events: none;
+}
+
+.admin-journey-card .journey-step-content {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 1024px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .detail-grid > div:last-child {
+    display: block;
+  }
+  .admin-detail-grid > div:first-child,
+  .admin-detail-grid > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+}
 .journey-caption { color: var(--text-muted); font-size: 12px; margin-bottom: 16px; }
 .journey-steps { display: grid; gap: 0; }
 .journey-step {
@@ -797,15 +1004,28 @@ tbody tr:last-child td { border-bottom: none; }
   display: grid;
   place-items: center;
   background: var(--surface);
-  color: transparent;
+  color: var(--text);
   font-size: 13px;
   font-weight: 700;
   z-index: 1;
 }
 .journey-step.is-complete { color: var(--text); }
 .journey-step.is-complete .journey-marker { background: var(--primary); border-color: var(--primary); color: #fff; }
+.journey-step.is-future .journey-marker { opacity: 0.5; }
 .journey-step.is-current .journey-marker { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
 .journey-step.is-current strong { color: var(--primary); }
+.status-marker { font-size: 15px; font-weight: 700; }
+.journey-step.status-step-attente .status-marker { color: #b87916; }
+.journey-step.status-step-encours .status-marker { color: #d97818; }
+.journey-step.status-step-prise_charge .status-marker { color: #0879bd; }
+.journey-step.status-step-demande_supplementaire .status-marker { color: #be3d46; }
+.journey-step.status-step-resolu .status-marker { color: #208448; }
+.journey-step.status-step-cloture .status-marker { color: #6b7280; }
+.journey-step.is-complete .journey-marker,
+.journey-step.is-complete.status-step-demande_supplementaire .journey-marker,
+.journey-step.is-complete.status-step-resolu .journey-marker { background: #0879bd; border-color: #0879bd; color: #fff; }
+.journey-steps .journey-step:nth-child(4).is-complete .journey-marker { font-size: 0; }
+.journey-steps .journey-step:nth-child(4).is-complete .journey-marker::after { content: '×'; font-size: 18px; color: #fff; }
 .journey-step strong { display: block; font-size: 13px; line-height: 1.3; }
 .journey-step small { display: block; margin-top: 3px; font-size: 11px; line-height: 1.35; }
 .journey-step--interactive { cursor: pointer; transition: color var(--transition); }
@@ -823,6 +1043,7 @@ tbody tr:last-child td { border-bottom: none; }
 .attachment-table tr:last-child td { border-bottom: 0; }
 .attachment-name { color: var(--primary); font-weight: 600; }
 .attachment-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.table-responsive { overflow-x: auto; }
 
 .detail-section { margin-bottom: 24px; }
 .detail-section h3 {
@@ -842,11 +1063,108 @@ tbody tr:last-child td { border-bottom: none; }
 
 .info-item label {
   display: block;
-  font-size: 12px;
+  font-size: 15px;
   color: var(--text-muted);
-  margin-bottom: 2px;
+  margin-bottom: 5px;
 }
-.info-item span { font-size: 14px; font-weight: 500; }
+.info-item span { font-size: 20px; font-weight: 500; color: #193653; }
+
+.detail-grid > div:first-child .card-body > .info-grid .info-item {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.detail-grid > div:first-child .card-body > .info-grid .info-item:nth-child(2),
+.detail-grid > div:first-child .card-body > .info-grid .info-item:nth-child(3),
+.detail-grid > div:first-child .card-body > .info-grid .info-item:nth-child(4) {
+  background: transparent;
+  border-color: transparent;
+}
+.detail-grid > div:first-child .card-body > .info-grid .info-item span {
+  display: inline;
+  margin-top: 0;
+}
+.detail-grid > div:first-child .card-body > .info-grid .info-item .badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 5px 14px;
+  font-size: 13px;
+  border-radius: 999px;
+}
+body:has(#ref) .detail-grid > div:first-child .card-body::before {
+  content: 'RÉCLAMATION';
+  display: block;
+  margin-bottom: 22px;
+  color: #6b8299;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: .03em;
+}
+body:has(#ref) #gravite {
+  display: inline-flex;
+  width: fit-content;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: #fae7e9;
+  border: 1px solid #edbcc2;
+  color: #be3d46;
+  font-size: 13px;
+  font-weight: 600;
+}
+.detail-grid > div:first-child .card-body > .info-grid .info-item label {
+  font-size: 11px;
+}
+.detail-grid > div:first-child .card-body > .info-grid .info-item span {
+  font-size: 13px;
+}
+.detail-grid > div:first-child .card-body > .info-grid .info-item .badge {
+  font-size: 13px;
+}
+.detail-grid > div:first-child .card-body .detail-section h3 {
+  font-size: 12px;
+}
+.detail-grid > div:first-child .card-body .detail-text,
+.detail-grid > div:first-child .card-body .chat-box,
+.detail-grid > div:first-child .card-body .chat-form {
+  font-size: 13px;
+}
+
+/* Taille compacte du résumé sur les deux écrans de détail. */
+.detail-grid .info-item label { font-size: 11px !important; margin-bottom: 3px; }
+.detail-grid .info-item span { font-size: 13px !important; line-height: 1.35; }
+.detail-grid .info-item .badge { font-size: 13px !important; padding: 4px 12px; }
+.detail-grid .card-body { padding: 18px; }
+
+/* Le mémo suit directement le parcours dans la colonne admin. */
+.admin-detail-grid > div:first-child,
+.admin-detail-grid > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.admin-detail-grid .memo-card {
+  grid-column: auto;
+  grid-row: auto;
+  margin-top: 0;
+  width: 100%;
+  align-self: stretch;
+}
+
+/* Logo transparent fourni par le projet, agrandi sans agrandir son cadre. */
+.sidebar-header .logo-img,
+.sidebar .logo-img {
+  content: url('../../Bank-Of-Africa-BMCE-Group-Emploi-Recrutement-4-removebg-preview.png');
+  width: 280px !important;
+  height: 100px !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover;
+  object-position: center;
+  background: transparent;
+}
+.sidebar-header { overflow: hidden; }
 
 .detail-text {
   background: var(--border-light);
@@ -1070,6 +1388,9 @@ tbody tr:last-child td { border-bottom: none; }
   height: 28px !important;
   max-height: 28px !important;
 }
+.sidebar-header { justify-content: center; align-items: center; }
+.sidebar .logo-img { width: 230px !important; height: 72px !important; max-width: 100%; max-height: 72px !important; object-fit: contain; object-position: center; }
+.sidebar-header { min-height: 108px; }
 
 .sidebar-user {
   background: rgba(255, 255, 255, 0.1);
@@ -1590,6 +1911,104 @@ tbody tr:last-child td { border-bottom: none; }
     transform: translateY(-20px);
   }
 }
+
+/* Liste repliable des mémos par réclamation. */
+.memo-list-card { overflow: hidden; }
+#filter-role, #filter-agence { display: none; }
+.memo-reclamations-table th:last-child,
+.memo-reclamations-table td:last-child { width: 54px; text-align: center; }
+.memo-reclamations-table th:nth-child(3),
+.memo-reclamations-table td:nth-child(3) { white-space: nowrap; }
+.memo-reclamation-row td { vertical-align: middle; }
+.memo-expand-button {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--primary);
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.memo-expand-button:hover { background: var(--primary-light); }
+.memo-details-row[hidden] { display: none; }
+.memo-details-row td { padding: 0 !important; background: #f7fafc; }
+.memo-details-list { padding: 14px 18px 6px 42px; border-top: 1px solid var(--border-light); }
+.memo-entry { margin: 0 0 10px; padding: 12px 14px; border: 1px solid var(--border-light); border-left: 3px solid var(--accent); border-radius: 8px; background: #fff; }
+.memo-entry:last-child { margin-bottom: 0; }
+.memo-entry-header { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 7px; }
+.memo-entry-message { color: var(--text); font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
+
+/* Connexion animée dans le thème BMCE. */
+.login-page {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(25,194,182,.28), transparent 28%),
+    radial-gradient(circle at 12% 82%, rgba(20,112,184,.32), transparent 34%),
+    #123d69;
+}
+.login-page::before,
+.login-page::after {
+  content: '';
+  position: absolute;
+  border: 1px solid rgba(25,194,182,.35);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: login-orbit 18s linear infinite;
+}
+.login-page::before { width: 520px; height: 520px; left: -180px; top: -170px; }
+.login-page::after { width: 380px; height: 380px; right: -120px; bottom: -120px; animation-direction: reverse; }
+.login-card {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(255,255,255,.35);
+  animation: login-card-in .7s cubic-bezier(.22,.8,.24,1) both;
+}
+.login-card .logo-img {
+  content: url('../../Bank-Of-Africa-BMCE-Group-Emploi-Recrutement-4-removebg-preview.png');
+  width: 280px !important;
+  height: 88px !important;
+  object-fit: contain;
+  object-position: center;
+  background: transparent;
+}
+.login-error {
+  display: none;
+  margin: -10px 0 18px;
+  padding: 10px 12px;
+  border: 1px solid #edbcc2;
+  border-radius: 8px;
+  background: #fff0f1;
+  color: #be3d46;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.login-error.is-visible { display: block; animation: login-error-in .25s ease both; }
+.login-card .form-control.input-error { border-color: #be3d46; box-shadow: 0 0 0 3px rgba(190,61,70,.12); }
+@keyframes login-card-in { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes login-error-in { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
+@keyframes login-orbit { to { transform: rotate(360deg); } }
+
+/* Priorité finale pour le logo dans toutes les pages avec sidebar. */
+.sidebar-header .logo-img,
+.sidebar .logo-img {
+  content: url('../../Bank-Of-Africa-BMCE-Group-Emploi-Recrutement-4-removebg-preview.png') !important;
+  width: 210px !important;
+  height: 48px !important;
+  max-width: none !important;
+  max-height: 43px !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  background: transparent !important;
+}
+.sidebar-header { min-height: 72px !important; padding-top: 6px; padding-bottom: 6px; }
 
 @keyframes pulse {
   0%, 100% {

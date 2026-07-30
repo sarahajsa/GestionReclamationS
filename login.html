@@ -11,12 +11,13 @@
   <div class="login-page">
     <div class="login-card">
       <div class="logo">
-        <img src="assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+        <img src="assets/img/logo-bmce.png" alt="Bank of Africa — BMCE Group" class="logo-img">
       </div>
 
       <h1>Connexion</h1>
       <p class="login-subtitle" id="login-subtitle">Accédez à votre espace réclamations</p>
 
+      <div id="login-error" class="login-error" role="alert" aria-live="polite"></div>
       <form id="login-form">
         <div class="form-group">
           <label class="form-label" for="email">Adresse e-mail</label>
@@ -51,31 +52,34 @@
       document.getElementById('login-subtitle').textContent = subtitles[action];
     }
 
-    document.getElementById('login-form').addEventListener('submit', (e) => {
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      const user = App.login(email, password);
+      try {
+        const res = await fetch('backend/api/login.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+          body: JSON.stringify({ email, password })
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          const error = document.getElementById('login-error');
+          error.textContent = json.message || json.error || 'Adresse e-mail ou mot de passe incorrect.';
+          error.classList.add('is-visible');
+          document.getElementById('email').classList.add('input-error');
+          document.getElementById('password').classList.add('input-error');
+          return;
+        }
+        document.getElementById('login-error').classList.remove('is-visible');
+        // store client-side session for frontend gating
+        App.setSession(json.user);
 
-      if (!user) {
-        App.showToast('Identifiants incorrects', 'error');
-        return;
-      }
-
-      if (redirect) {
-        window.location.href = decodeURIComponent(redirect);
-        return;
-      }
-
-      if (user.role === 'admin') {
-        window.location.href = 'admin/dashboard.html';
-      } else if (action === 'deposer') {
-        window.location.href = 'client/deposer.html';
-      } else if (action === 'suivre') {
-        window.location.href = 'client/suivre.html';
-      } else {
-        window.location.href = 'client/dashboard.html';
-      }
+        if (redirect) { window.location.href = decodeURIComponent(redirect); return; }
+        if (json.user.role === 'admin') window.location.href = 'admin/dashboard.html';
+        else if (action === 'deposer') window.location.href = 'client/deposer.html';
+        else if (action === 'suivre') window.location.href = 'client/dashboard.html';
+        else window.location.href = 'client/dashboard.html';
+      } catch (err) { App.showToast('Erreur connexion', 'error'); }
     });
   </script>
 </body>

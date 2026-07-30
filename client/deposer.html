@@ -12,7 +12,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <img src="../assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+          <img src="../assets/img/logo-bmce.png" alt="Bank of Africa — BMCE Group" class="logo-img">
         </div>
       </div>
       <div class="sidebar-user">
@@ -32,7 +32,6 @@
             <a href="deposer.html"><span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span> Déposer réclamation</a>
           </li>
           <li class="nav-item">
-            <a href="suivre.html"><span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span> Suivre réclamations</a>
           </li>
         </ul>
       </nav>
@@ -107,7 +106,7 @@
                 </div>
                 <div class="form-group" id="dossier-group" style="display:none; margin-top:16px;">
                   <label class="form-label" for="numero_dossier">Numéro de dossier <span class="required">*</span></label>
-                  <input type="text" class="form-control" id="numero_dossier" placeholder="Ex: CRD-2025-8891">
+                  <input type="text" class="form-control" id="numero_dossier" name="numero_dossier" placeholder="Ex: CRD-2025-8891">
                   <span class="form-error">Veuillez saisir le numéro de dossier</span>
                 </div>
               </div>
@@ -117,7 +116,7 @@
                 <h3>Détails de la réclamation</h3>
                 <div class="form-group">
                   <label class="form-label" for="objet">Objet <span class="required">*</span></label>
-                  <select class="form-control" id="objet" required>
+                  <select class="form-control" id="objet" name="objet" required>
                     <option value="">— Sélectionner —</option>
                     <option value="Retard de traitement dossier crédit">Retard de traitement dossier crédit</option>
                     <option value="Erreur sur montant / mensualité">Erreur sur montant / mensualité</option>
@@ -137,7 +136,7 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label" for="type">Type de crédit <span class="required">*</span></label>
-                    <select class="form-control" id="type" required>
+                    <select class="form-control" id="type" name="type" required>
                       <option value="">— Sélectionner —</option>
                       <option value="credit_immobilier">Crédit immobilier</option>
                       <option value="credit_auto">Crédit auto</option>
@@ -153,7 +152,7 @@
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="gravite">Niveau de gravité <span class="required">*</span></label>
-                    <select class="form-control" id="gravite" required>
+                    <select class="form-control" id="gravite" name="gravite" required>
                       <option value="">— Sélectionner —</option>
                       <option value="basse">Basse</option>
                       <option value="moyenne">Moyenne</option>
@@ -164,7 +163,7 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="detail">Description détaillée <span class="required">*</span></label>
+                  <label class="form-label" for="detail">Message <span class="required">*</span></label>
                   <textarea class="form-control" id="detail" placeholder="Décrivez votre réclamation en détail..." required></textarea>
                   <span class="form-error">La description est obligatoire</span>
                 </div>
@@ -174,7 +173,7 @@
               <div class="detail-section">
                 <h3>Pièce jointe</h3>
                 <div class="file-upload" id="file-upload">
-                  <input type="file" id="piece_jointe" accept=".pdf,.jpg,.jpeg,.png">
+                  <input type="file" id="piece_jointe" name="piece_jointe" accept=".pdf,.jpg,.jpeg,.png">
                   <div class="file-upload-icon">📎</div>
                   <div class="file-upload-text">
                     Glissez un fichier ici ou <strong>parcourir</strong><br>
@@ -209,23 +208,38 @@
         <p style="font-size:13px; color:var(--text-muted); margin-top:8px;">Conservez cette référence pour le suivi.</p>
       </div>
       <div class="modal-footer">
-        <a href="suivre.html" class="btn btn-primary" id="btn-go-suivre">Suivre mes réclamations</a>
+        <a href="dashboard.html" class="btn btn-primary" id="btn-go-dashboard">Retour au tableau de bord</a>
       </div>
     </div>
   </div>
 
   <script src="../assets/js/app.js"></script>
-  <script>
+  <script type="module">
     const session = App.requireAuth(['client']);
     if (!session) throw new Error('Unauthorized');
+    const editRef = new URLSearchParams(location.search).get('ref');
+    const existingRecord = editRef ? (await App.loadReclamations()).find(r => r.reference === editRef) : null;
+    if (editRef && !existingRecord) location.href = 'dashboard.html';
 
     // Pré-remplir les champs client
-    document.getElementById('nom').value = session.nom;
-    document.getElementById('prenom').value = session.prenom;
-    document.getElementById('cin').value = session.cin;
-    document.getElementById('telephone').value = session.telephone;
-    document.getElementById('email_display').value = session.email_display;
-    document.getElementById('numero_compte').value = session.numero_compte;
+    const clientValue = key => session[key] ?? '';
+    document.getElementById('nom').value = clientValue('nom');
+    document.getElementById('prenom').value = clientValue('prenom');
+    document.getElementById('cin').value = clientValue('cin');
+    document.getElementById('telephone').value = clientValue('telephone');
+    document.getElementById('email_display').value = clientValue('email');
+    document.getElementById('numero_compte').value = clientValue('numero_compte');
+    if (existingRecord) {
+      document.getElementById('detail').value=existingRecord.detail;
+      document.getElementById('gravite').value=existingRecord.gravite;
+      document.getElementById('numero_dossier').value=existingRecord.numero_dossier||'';
+      document.getElementById('objet').value=[...document.getElementById('objet').options].some(o=>o.value===existingRecord.objet)?existingRecord.objet:'autre';
+      if (document.getElementById('objet').value === 'autre') document.getElementById('objet_autre').value=existingRecord.objet;
+      document.getElementById('type').value=existingRecord.type;
+      if (existingRecord.type === 'autre') document.getElementById('type_autre').value=existingRecord.type_label||'';
+      document.querySelector(`input[name="portee"][value="${existingRecord.portee}"]`).click();
+      document.getElementById('objet').dispatchEvent(new Event('change')); document.getElementById('type').dispatchEvent(new Event('change'));
+    }
 
     // Objet "Autre" toggle
     const objetSelect = document.getElementById('objet');
@@ -292,7 +306,7 @@
     }
 
     // Validation & Submit
-    document.getElementById('reclamation-form').addEventListener('submit', (e) => {
+    document.getElementById('reclamation-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       let valid = true;
 
@@ -332,47 +346,43 @@
         document.getElementById('objet_autre').closest('.form-group').classList.add('has-error');
         return;
       }
+      if (document.getElementById('type').value === 'autre' && !document.getElementById('type_autre').value.trim()) {
+        document.getElementById('type_autre').closest('.form-group').classList.add('has-error');
+        return;
+      }
 
-      const ref = App.generateReference();
-      const now = new Date().toISOString();
-      const rec = {
-        id: App.reclamations.length + 1,
-        reference: ref,
-        client_id: 'client',
-        nom: session.nom,
-        prenom: session.prenom,
-        objet: objetValue,
-        type: typeValue,
-        type_label: typeLabelValue,
-        gravite: document.getElementById('gravite').value,
-        gravite_label: App.getGraviteLabel(document.getElementById('gravite').value),
-        statut: 'nouveau',
-        statut_label: 'Nouveau',
-        portee: portee,
-        numero_dossier: portee === 'dossier' ? document.getElementById('numero_dossier').value.trim() : null,
-        detail: document.getElementById('detail').value.trim(),
-        piece_jointe: selectedFile ? selectedFile.name : null,
-        date_creation: now,
-        date_modification: now,
-        memos: []
-      };
-
-      App.reclamations.unshift(rec);
-      document.getElementById('modal-ref').textContent = ref;
-      document.getElementById('confirm-modal').classList.add('active');
-      document.getElementById('reclamation-form').reset();
+      const form = document.getElementById('reclamation-form');
+      const body = new FormData(form);
+      body.set('objet', objetValue);
+      body.set('type', typeValue);
+      body.set('type_label', typeLabelValue || App.getTypeLabel(typeValue));
+      body.set('portee', portee);
+      body.set('detail', document.getElementById('detail').value.trim());
+      body.set('gravite', document.getElementById('gravite').value);
+      try {
+        if (existingRecord) { body.set('action','update'); body.set('reference',editRef); }
+        const res = await App.api('../backend/api/reclamations.php', {method:'POST', body});
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.message || 'Erreur');
+        document.getElementById('modal-ref').textContent = json.reference;
+        await App.api('../backend/api/messages.php', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({reference:json.reference, message:document.getElementById('detail').value.trim()})});
+        document.getElementById('btn-go-dashboard').textContent = 'Suivre la réclamation';
+        document.getElementById('btn-go-dashboard').href = 'detail.html?ref=' + encodeURIComponent(json.reference);
+        document.getElementById('confirm-modal').classList.add('active');
+        form.reset();
+      } catch (err) { App.showToast(err.message, 'error'); return; }
       filePreview.innerHTML = '';
       selectedFile = null;
       document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('active'));
       document.querySelector('.radio-card[data-portee="general"]').classList.add('active');
       document.getElementById('dossier-group').style.display = 'none';
       // Re-préremplir
-      document.getElementById('nom').value = session.nom;
-      document.getElementById('prenom').value = session.prenom;
-      document.getElementById('cin').value = session.cin;
-      document.getElementById('telephone').value = session.telephone;
-      document.getElementById('email_display').value = session.email_display;
-      document.getElementById('numero_compte').value = session.numero_compte;
+      document.getElementById('nom').value = clientValue('nom');
+      document.getElementById('prenom').value = clientValue('prenom');
+      document.getElementById('cin').value = clientValue('cin');
+      document.getElementById('telephone').value = clientValue('telephone');
+      document.getElementById('email_display').value = clientValue('email');
+      document.getElementById('numero_compte').value = clientValue('numero_compte');
     });
 
     document.getElementById('close-modal').addEventListener('click', () => {

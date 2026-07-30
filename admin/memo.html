@@ -12,7 +12,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <img src="../assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+          <img src="../assets/img/logo-bmce.png" alt="Bank of Africa — BMCE Group" class="logo-img">
         </div>
       </div>
       <div class="sidebar-user">
@@ -73,15 +73,19 @@
   </div>
 
   <script src="../assets/js/app.js"></script>
-  <script>
+  <script type="module">
     const session = App.requireAuth(['admin']);
     if (!session) throw new Error('Unauthorized');
 
+    const recs = await App.loadReclamations();
+    document.getElementById('filter-memo-statut').innerHTML = '<option value="">Tous les statuts</option><option value="attente">En attente</option><option value="encours">En cours</option><option value="prise_charge">Prise en charge</option><option value="demande_supplementaire">Demande supplémentaire</option><option value="resolu">Résolue</option><option value="cloture">Clôturée</option>';
+    const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+
     function getAllMemos() {
       const all = [];
-      App.reclamations.forEach(rec => {
+      recs.forEach(rec => {
         rec.memos.forEach(m => {
-          all.push({ ...m, reference: rec.reference, objet: rec.objet, statut: rec.statut, gravite: rec.gravite, agence: m.role === 'agence' ? m.auteur : '' });
+          all.push({ ...m, reference: rec.reference, objet: rec.objet, statut: rec.statut, statut_label: rec.statut_label, gravite: rec.gravite, agence: m.role === 'agence' ? m.auteur : '' });
         });
       });
       return all.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -89,8 +93,8 @@
 
     function renderMemos() {
       const q = document.getElementById('search-memo').value.toLowerCase();
-      const roleFilter = document.getElementById('filter-role').value;
-      const agenceFilter = document.getElementById('filter-agence').value;
+      const roleFilter = '';
+      const agenceFilter = '';
       const statutFilter = document.getElementById('filter-memo-statut').value;
       const graviteFilter = document.getElementById('filter-memo-gravite').value;
       let memos = getAllMemos();
@@ -123,24 +127,36 @@
         return;
       }
 
-      container.innerHTML = memos.map(m => `
-        <div class="card" style="margin-bottom:16px;">
-          <div class="card-body">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-              <div style="display:flex; align-items:center; gap:10px;">
-                <a href="detail.html?ref=${m.reference}" class="ref-link">${m.reference}</a>
-                <span style="font-size:13px; color:var(--text-muted);">${m.objet}</span>
-              </div>
-              <span class="timeline-date">${App.formatDateTime(m.date)}</span>
-            </div>
-            <div class="timeline-header" style="margin-bottom:8px;">
-              <span class="timeline-author">${m.auteur}</span>
-              <span class="badge badge-${m.role === 'admin' ? 'encours' : 'attente'}">${m.role === 'admin' ? 'Administration' : 'Agence'}</span>
-            </div>
-            <div class="timeline-body">${m.message}</div>
-          </div>
-        </div>
-      `).join('');
+      const groups = [...new Map(memos.map(m => [m.reference, {
+        reference: m.reference, objet: m.objet, statut: m.statut, statut_label: m.statut_label || App.getStatutLabel(m.statut), memos: []
+      }])).values()];
+      memos.forEach(m => groups.find(group => group.reference === m.reference).memos.push(m));
+
+      container.innerHTML = `<div class="card memo-list-card"><div class="table-wrap"><table class="memo-reclamations-table">
+        <thead><tr><th>Réclamation</th><th>Objet</th><th>Statut</th><th>Nombre de mémos</th><th></th></tr></thead>
+        <tbody>${groups.map(group => `
+          <tr class="memo-reclamation-row" data-reference="${esc(group.reference)}">
+            <td><a href="detail.html?ref=${encodeURIComponent(group.reference)}" class="ref-link">${esc(group.reference)}</a></td>
+            <td>${esc(group.objet)}</td>
+            <td><span class="badge ${App.getStatutBadge(group.statut)}">${esc(group.statut_label)}</span></td>
+            <td><span class="badge badge-encours">${group.memos.length} mémo${group.memos.length > 1 ? 's' : ''}</span></td>
+            <td><button type="button" class="memo-expand-button" data-toggle-memos="${esc(group.reference)}" aria-expanded="false" title="Afficher les mémos">+</button></td>
+          </tr>
+          <tr class="memo-details-row" data-details="${esc(group.reference)}" hidden><td colspan="5"><div class="memo-details-list">
+            ${group.memos.map(m => `<article class="memo-entry"><div class="memo-entry-header"><span class="badge badge-${m.role === 'admin' ? 'encours' : 'attente'}">${m.role === 'admin' ? 'Administration' : 'Agence'}</span><span class="timeline-date">${App.formatDateTime(m.date)}</span></div><div class="memo-entry-message">${esc(m.message)}</div></article>`).join('')}
+          </div></td></tr>
+        `).join('')}</tbody>
+      </table></div></div>`;
+
+      container.querySelectorAll('[data-toggle-memos]').forEach(button => button.addEventListener('click', () => {
+        const reference = button.dataset.toggleMemos;
+        const details = container.querySelector(`[data-details="${CSS.escape(reference)}"]`);
+        const expanded = button.getAttribute('aria-expanded') === 'true';
+        details.hidden = expanded;
+        button.setAttribute('aria-expanded', String(!expanded));
+        button.textContent = expanded ? '+' : '−';
+        button.title = expanded ? 'Afficher les mémos' : 'Masquer les mémos';
+      }));
     }
 
     const agencySelect = document.getElementById('filter-agence');

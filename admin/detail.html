@@ -13,7 +13,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <img src="../assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+          <img src="../assets/img/logo-bmce.png" alt="Bank of Africa — BMCE Group" class="logo-img">
         </div>
       </div>
       <div class="sidebar-user">
@@ -56,311 +56,250 @@
       </div>
     </div>
   </div>
-
   <script src="../assets/js/app.js"></script>
   <script>
-    const session = App.requireAuth(['admin']);
-    if (!session) throw new Error('Unauthorized');
-
-    const ref = new URLSearchParams(window.location.search).get('ref');
-    const rec = App.reclamations.find(r => r.reference === ref);
-
-    if (!rec) {
-      document.getElementById('detail-content').innerHTML = `
-        <div class="empty-state">
-          <h3>Réclamation introuvable</h3>
-          <p>La référence "${ref || ''}" n'existe pas.</p>
-          <a href="reclamations.html" class="btn btn-primary" style="margin-top:16px;">Retour à la liste</a>
-        </div>`;
-      throw new Error('Not found');
-    }
-
-    document.getElementById('page-title').textContent = rec.reference;
-
-    const statusStages = [
-      { id: 'nouveau', title: 'Nouveau', action: 'Réclamation enregistrée' },
-      { id: 'encours', title: 'En cours', action: 'Dossier pris en charge' },
-      { id: 'attente', title: 'En attente', action: 'En attente d\'un retour' },
-      { id: 'resolu', title: 'Résolu', action: 'Dossier clôturé avec réponse' },
-      { id: 'rejete', title: 'Rejeté', action: 'Dossier clôturé sans suite favorable' }
-    ];
-
-    function getStatusHistory() {
-      if (!rec.statusHistory) {
-        rec.statusHistory = [{ 
-          status: 'nouveau', 
-          date: rec.date_creation, 
-          action: 'Réclamation enregistrée',
-          auteur: 'Système',
-          role: 'system'
-        }];
-        if (rec.statut !== 'nouveau') {
-          const stage = statusStages.find(item => item.id === rec.statut);
-          rec.statusHistory.push({ 
-            status: rec.statut, 
-            date: rec.date_modification, 
-            action: stage.action,
-            auteur: 'Administrateur',
-            role: 'admin'
-          });
-        }
+    (async function(){
+      const session = JSON.parse(sessionStorage.getItem('bmce_session') || 'null');
+      if (!session || session.role !== 'admin') {
+        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `../login.html?redirect=${returnUrl}`;
+        return;
       }
-      return rec.statusHistory;
-    }
 
-    function renderJourney() {
-      const history = getStatusHistory();
-      const container = document.getElementById('journey-steps');
-      
-      // Créer un map pour accéder rapidement aux informations d'historique
-      const historyMap = {};
-      history.forEach(item => {
-        historyMap[item.status] = item;
-      });
+      const ref = new URLSearchParams(window.location.search).get('ref');
+      if (!ref) {
+        document.getElementById('detail-content').innerHTML = `<div class="empty-state"><h3>Référence manquante</h3></div>`;
+        return;
+      }
 
-      container.innerHTML = statusStages.map((step, index) => {
-        const historyItem = historyMap[step.id];
-        const isComplete = historyItem !== undefined;
-        const isCurrent = rec.statut === step.id;
-        
-        return `
-        <div class="journey-step ${isCurrent ? 'is-current' : ''} ${isComplete ? 'is-complete' : ''}">
-          <button class="journey-step-content ${isComplete ? 'journey-step--interactive' : ''}" 
-                  type="button" 
-                  data-status="${step.id}" 
-                  ${isComplete && !isCurrent ? 'data-action="cancel"' : ''}
-                  ${!isComplete ? 'data-action="validate"' : ''}>
-            <span class="journey-marker">${isComplete ? '✓' : index + 1}</span>
-            <div class="journey-step-info">
-              <span><strong>${step.title}</strong></span>
-              <small>${isCurrent ? 'Statut actuel' : step.action}</small>
-              ${historyItem ? `
-                <div class="journey-step-meta">
-                  <span class="journey-step-date">${App.formatDateTime(historyItem.date)}</span>
-                  <span class="journey-step-author">Par ${historyItem.auteur}</span>
-                </div>
-              ` : ''}
-            </div>
-          </button>
-        </div>`;
-      }).join('');
+      async function fetchDetail() {
+        const res = await fetch(`../backend/api/reclamation_detail.php?ref=${encodeURIComponent(ref)}`, { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('Erreur serveur');
+        return res.json();
+      }
 
-      // Gérer les événements de clic
-      container.querySelectorAll('[data-status]').forEach(button => {
-        button.addEventListener('click', (e) => {
-          const nextStatus = button.dataset.status;
-          const action = button.dataset.action;
-          
-          if (action === 'cancel') {
-            // Annulation - demande de confirmation
-            showConfirmationDialog(
-              'Annuler la validation',
-              `Voulez-vous vraiment annuler la validation du statut "${statusStages.find(s => s.id === nextStatus).title}" ?`,
-              () => {
-                // Annuler le dernier changement
-                history.pop();
-                rec.statut = history[history.length - 1].status;
-                rec.statut_label = App.getStatutLabel(rec.statut);
-                rec.date_modification = new Date().toISOString();
-                renderDetail();
-              }
-            );
-          } else if (action === 'validate') {
-            // Validation - demande de confirmation
-            showConfirmationDialog(
-              'Valider le statut',
-              `Voulez-vous vraiment valider le statut "${statusStages.find(s => s.id === nextStatus).title}" ?`,
-              () => {
-                const stage = statusStages.find(item => item.id === nextStatus);
-                history.push({ 
-                  status: nextStatus, 
-                  date: new Date().toISOString(), 
-                  action: stage.action,
-                  auteur: `${session.prenom} ${session.nom}`,
-                  role: 'admin'
-                });
-                rec.statut = nextStatus;
-                rec.statut_label = App.getStatutLabel(rec.statut);
-                rec.date_modification = new Date().toISOString();
-                renderDetail();
-              }
-            );
-          }
+      let recData;
+      try {
+        const data = await fetchDetail();
+        recData = data.reclamation;
+        recData.statusHistory = data.history || [];
+        recData.memos = data.memos || [];
+      } catch (e) {
+        document.getElementById('detail-content').innerHTML = `<div class="empty-state"><h3>Réclamation introuvable</h3><p>${e.message}</p></div>`;
+        return;
+      }
+
+      document.getElementById('page-title').textContent = recData.reference;
+
+      const statusStages = [
+        { id: 'attente', title: 'En attente', action: 'Réclamation enregistrée', icon: '⌛' },
+        { id: 'encours', title: 'En cours', action: 'Consultation administrative automatique', icon: '↻' },
+        { id: 'prise_charge', title: 'Prise en charge', action: 'Réponse administrative automatique', icon: '✓' },
+        { id: 'demande_supplementaire', title: 'Demande supplémentaire', action: 'Validation manuelle', icon: '⚠' },
+        { id: 'resolu', title: 'Résolue', action: 'Validation manuelle', icon: '✓' },
+        { id: 'cloture', title: 'Clôturée', action: 'Automatique après 7 jours sans activité', icon: '▣' }
+      ];
+
+      function showConfirmation(message) {
+        return new Promise(resolve => {
+          const overlay = document.createElement('div');
+          overlay.className = 'modal-overlay active';
+          overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
+            <div class="modal-header"><h3>Confirmation</h3><button class="btn-icon" type="button" data-modal-cancel>&times;</button></div>
+            <div class="modal-body"><p>${message}</p></div>
+            <div class="modal-footer"><button class="btn btn-outline" type="button" data-modal-cancel>Annuler</button><button class="btn btn-accent" type="button" data-modal-ok>Confirmer</button></div>
+          </div>`;
+          document.body.appendChild(overlay);
+          const close = value => { overlay.remove(); resolve(value); };
+          overlay.querySelectorAll('[data-modal-cancel]').forEach(button => button.addEventListener('click', () => close(false)));
+          overlay.querySelector('[data-modal-ok]').addEventListener('click', () => close(true));
+          overlay.addEventListener('click', event => { if (event.target === overlay) close(false); });
         });
-      });
-    }
+      }
 
-    function showConfirmationDialog(title, message, onConfirm) {
-      // Créer et afficher une boîte de dialogue de confirmation
-      const dialog = document.createElement('div');
-      dialog.className = 'modal-overlay';
-      dialog.innerHTML = `
-        <div class="modal">
-          <div class="modal-header">
-            <h3>${title}</h3>
-            <button class="btn-icon" data-close>✕</button>
-          </div>
-          <div class="modal-body">
-            <p>${message}</p>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-ghost" data-cancel>Annuler</button>
-            <button class="btn btn-primary" data-confirm>Confirmer</button>
-          </div>
-        </div>
-      `;
-      
-      document.body.appendChild(dialog);
-      
-      // Gérer les événements
-      dialog.querySelector('[data-close]').addEventListener('click', () => dialog.remove());
-      dialog.querySelector('[data-cancel]').addEventListener('click', () => dialog.remove());
-      dialog.querySelector('[data-confirm]').addEventListener('click', () => {
-        onConfirm();
-        dialog.remove();
-      });
-      
-      // Fermer en cliquant à l'extérieur
-      dialog.addEventListener('click', (e) => {
-        if (e.target === dialog) dialog.remove();
-      });
-    }
-
-    function renderDetail() {
-      document.getElementById('detail-content').innerHTML = `
-        <div class="detail-grid">
-          <div>
-            <div class="card" style="margin-bottom:24px;">
-              <div class="card-header">
-                <div>
-                  <h2 style="font-family:monospace;">${rec.reference}</h2>
-                  <span class="badge ${App.getStatutBadge(rec.statut)}">${rec.statut_label}</span>
+      function renderJourney() {
+        const historyMap = {};
+        (recData.statusHistory || []).forEach(h => historyMap[h.status] = h);
+        const currentIndex = Math.max(0, statusStages.findIndex(s => s.id === recData.statut));
+        const container = document.getElementById('journey-steps');
+        container.innerHTML = statusStages.map((step, index) => {
+          const historyItem = historyMap[step.id];
+          const isComplete = index <= currentIndex;
+          const isCurrent = index === currentIndex;
+          const isNext = index === currentIndex + 1;
+          const canValidate = (isNext && step.id !== 'cloture') || (recData.statut === 'prise_charge' && ['demande_supplementaire','resolu'].includes(step.id));
+          const canCancel = isComplete && !['attente','cloture'].includes(step.id);
+          const action = canCancel ? 'cancel' : canValidate ? 'validate' : '';
+          const targetStatus = step.id;
+          const disabledAttr = action ? '' : 'disabled aria-disabled="true"';
+          return `
+            <div class="journey-step status-step-${step.id} ${isCurrent ? 'is-current' : ''} ${isComplete ? 'is-complete' : ''} ${isNext ? 'is-next' : ''}">
+              <button class="journey-step-content ${action ? 'journey-step--interactive' : 'journey-step--locked'}" type="button" ${disabledAttr} data-status="${targetStatus}" ${action ? `data-action="${action}"` : ''}>
+                <span class="journey-marker status-marker status-${step.id}">${isComplete ? (step.id === 'demande_supplementaire' ? '×' : '✓') : index + 1}</span>
+                <div class="journey-step-info">
+                  <span><strong>${step.title}</strong></span>
+                  <small>${isCurrent ? 'Statut actuel' : step.action}</small>
+                  ${historyItem ? `<div class="journey-step-meta"><span class="journey-step-date">${App.formatDateTime(historyItem.date)}</span><span class="journey-step-author">Par ${historyItem.auteur}</span></div>` : ''}
                 </div>
-              </div>
-              <div class="card-body">
-                <div class="detail-section">
-                  <h3>Client</h3>
-                  <div class="info-grid">
-                    <div class="info-item"><label>Nom complet</label><span>${rec.prenom} ${rec.nom}</span></div>
-                    <div class="info-item"><label>Portée</label><span>${rec.portee === 'dossier' ? 'Dossier ' + rec.numero_dossier : 'Générale'}</span></div>
+              </button>
+            </div>`;
+        }).join('');
+
+        container.querySelectorAll('[data-status]').forEach(btn => {
+          const action = btn.dataset.action;
+          if (!action || btn.disabled) return;
+          btn.addEventListener('click', async () => {
+            const nextStatus = btn.dataset.status;
+            const stage = statusStages.find(s => s.id === nextStatus);
+            const question = action === 'cancel'
+              ? `Voulez-vous annuler le statut "${stage.title}" ? Les statuts suivants déjà validés seront également annulés.`
+              : `Voulez-vous valider le statut "${stage.title}" ?`;
+            if (!await showConfirmation(question)) return;
+            try {
+              const res = await fetch('../backend/api/update_statut.php', {
+                method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reference: recData.reference, next_status: nextStatus, action })
+              });
+              const json = await res.json();
+              if (!res.ok) throw new Error(json.error || 'Erreur');
+              App.showToast('Statut mis à jour');
+              // reload detail from server
+              const fresh = await fetchDetail();
+              recData = fresh.reclamation; recData.statusHistory = fresh.history; recData.memos = fresh.memos;
+              renderDetail();
+            } catch (e) {
+              App.showToast('Erreur lors de la mise à jour', 'error');
+            }
+          });
+        });
+      }
+
+      function renderDetail() {
+        document.getElementById('detail-content').innerHTML = `
+          <div class="detail-grid admin-detail-grid">
+            <div>
+              <div class="card" style="margin-bottom:24px;">
+                <div class="card-header">
+                  <div>
+                    <h2 style="font-family:monospace;">${recData.reference}</h2>
+                    <span class="badge ${App.getStatutBadge(recData.statut)}">${recData.statut_label}</span>
                   </div>
                 </div>
-                <div class="detail-section">
-                  <h3>Réclamation</h3>
-                  <div class="info-grid">
-                    <div class="info-item"><label>Objet</label><span>${rec.objet}</span></div>
-                    <div class="info-item"><label>Type</label><span>${rec.type_label}</span></div>
-                    <div class="info-item"><label>Priorité</label><span class="badge ${App.getGraviteBadge(rec.gravite)}">${rec.gravite_label}</span></span></div>
-                    <div class="info-item"><label>Date de dépôt</label><span>${App.formatDateTime(rec.date_creation)}</span></div>
-                  </div>
-                </div>
-                <div class="detail-section">
-                  <h3>Description</h3>
-                  <div class="detail-text">${rec.detail}</div>
-                </div>
-                ${rec.piece_jointe ? `
-                <div class="detail-section">
-                  <h3>Pièce jointe</h3>
-                  <table class="attachment-table">
-                    <thead><tr><th>Nom du fichier</th><th>Type</th><th>Taille</th><th></th></tr></thead>
-                    <tbody><tr>
-                      <td class="attachment-name">${rec.piece_jointe}</td>
-                      <td>${rec.piece_jointe.split('.').pop().toUpperCase()}</td>
-                      <td>248 Ko</td>
-                      <td><span class="attachment-actions"><a class="btn btn-outline btn-sm" href="../uploads/${rec.piece_jointe}" target="_blank">Ouvrir</a><a class="btn btn-primary btn-sm" href="../uploads/${rec.piece_jointe}" download>Télécharger</a></span></td>
-                    </tr></tbody>
-                  </table>
-                </div>` : ''}
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <!-- Parcours de la réclamation -->
-            <div class="card journey-card" style="margin-bottom:24px;">
-              <div class="card-header"><h3>Parcours de la réclamation</h3></div>
-              <div class="card-body">
-                <p class="journey-caption">Cliquez sur une étape pour la valider ou l'annuler.</p>
-                <div class="journey-steps" id="journey-steps"></div>
-              </div>
-            </div>
-
-            <!-- Mémos -->
-            <div class="card memo-card" id="memo-card">
-              <div class="card-header">
-                <h3>Mémos</h3>
-                <button class="btn btn-ghost btn-sm" id="btn-toggle-memos" type="button" aria-expanded="false">
-                  <span id="memo-toggle-text">Afficher</span> (${rec.memos.length})
-                </button>
-              </div>
-              <div class="card-body memo-content" id="memo-content" style="display:none;">
-                <div class="memo-content-inner">
-                <div class="timeline" id="memos-list">
-                  ${rec.memos.length === 0 ? '' : rec.memos.map(m => `
-                    <div class="timeline-item">
-                      <div class="timeline-dot"></div>
-                      <div class="timeline-header">
-                        <span class="timeline-author">${m.auteur}</span>
-                        <span class="badge badge-${m.role === 'admin' ? 'encours' : 'attente'}" style="font-size:11px;">${m.role === 'admin' ? 'Admin' : 'Agence'}</span>
-                        <span class="timeline-date">${App.formatDateTime(m.date)}</span>
-                      </div>
-                      <div class="timeline-body">${m.message}</div>
+                <div class="card-body">
+                  <div class="detail-section">
+                    <h3>Client</h3>
+                    <div class="info-grid">
+                      <div class="info-item"><label>Nom complet</label><span>${recData.client_prenom} ${recData.client_nom}</span></div>
+                      <div class="info-item"><label>Portée</label><span>${recData.portee === 'dossier' ? 'Dossier ' + (recData.numero_dossier || '') : 'Générale'}</span></div>
                     </div>
-                  `).join('')}
-                </div>
-                ${rec.memos.length === 0 ? '<p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Aucun mémo.</p>' : ''}
-
-                <div class="memo-form">
-                  <div class="form-group">
-                    <label class="form-label">Ajouter un mémo</label>
-                    <textarea class="form-control" id="memo-text" placeholder="Message pour l'agence ou note interne..." rows="3"></textarea>
                   </div>
-                  <div class="form-group">
-                    <label class="form-label">Destinataire</label>
-                    <select class="form-control" id="memo-dest">
-                      <option value="agence">Agence</option>
-                      <option value="admin">Note interne</option>
-                    </select>
+                  <div class="detail-section">
+                    <h3>Réclamation</h3>
+                    <div class="info-grid">
+                      <div class="info-item"><label>Objet</label><span>${recData.objet}</span></div>
+                      <div class="info-item"><label>Type</label><span>${recData.type_label || recData.type}</span></div>
+                      <div class="info-item"><label>Priorité</label><span class="badge ${App.getGraviteBadge(recData.gravite)}">${recData.gravite_label}</span></div>
+                      <div class="info-item"><label>Date de dépôt</label><span>${App.formatDateTime(recData.date_creation)}${recData.date_modification && recData.date_modification !== recData.date_creation ? ' · Modifiée le ' + App.formatDateTime(recData.date_modification) : ''}</span></div>
+                    </div>
                   </div>
-                  <button class="btn btn-accent btn-sm" id="btn-add-memo">Envoyer le mémo</button>
-                </div>
+                  <div class="detail-section attachment-section">
+                    <h3>Pièces jointes</h3>
+                    ${recData.piece_jointe ? `<div class="table-responsive"><table class="attachment-table"><thead><tr><th>Nom</th><th>Type</th><th>Actions</th></tr></thead><tbody><tr><td class="attachment-name">${recData.piece_jointe_nom || recData.piece_jointe}</td><td>${(recData.piece_jointe_nom || recData.piece_jointe).split('.').pop().toUpperCase()}</td><td><div class="attachment-actions"><a class="btn btn-outline btn-sm" target="_blank" rel="noopener" href="../backend/api/piece_jointe.php?ref=${encodeURIComponent(recData.reference)}">Voir</a><a class="btn btn-accent btn-sm" href="../backend/api/piece_jointe.php?ref=${encodeURIComponent(recData.reference)}&download=1">Télécharger</a></div></td></tr></tbody></table></div>` : '<p class="empty-state">Aucune pièce jointe.</p>'}
+                  </div>
+                  <div class="detail-section">
+                    <h3>Description</h3>
+                    <div class="detail-text">${recData.detail}</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>`;
 
-      renderJourney();
+            <div>
+              <div class="card journey-card admin-journey-card" style="margin-bottom:24px;">
+                <div class="card-header"><h3>Parcours de la réclamation</h3></div>
+                <div class="card-body">
+                  <p class="journey-caption">Cliquez sur une étape pour la valider ou l'annuler.</p>
+                  <div class="journey-steps" id="journey-steps"></div>
+                </div>
+              </div>
 
-      const memoCard = document.getElementById('memo-card');
-      const memoContent = document.getElementById('memo-content');
-      const toggleMemos = document.getElementById('btn-toggle-memos');
-      const memoToggleText = document.getElementById('memo-toggle-text');
-      
-      toggleMemos.addEventListener('click', () => {
-        const isOpen = memoContent.style.display !== 'none';
-        memoContent.style.display = isOpen ? 'none' : 'block';
-        toggleMemos.setAttribute('aria-expanded', String(!isOpen));
-        memoToggleText.textContent = isOpen ? 'Afficher' : 'Masquer';
-      });
+              <div class="card memo-card" id="memo-card">
+                <div class="card-header">
+                  <h3>Mémos</h3>
+                  <button class="btn btn-ghost btn-sm" id="btn-toggle-memos" type="button" aria-expanded="true">
+                    <span id="memo-toggle-text">Masquer</span> (${(recData.memos || []).length})
+                  </button>
+                </div>
+                <div class="card-body memo-content" id="memo-content" style="display:block;">
+                  <div class="memo-content-inner">
+                  <div class="timeline" id="memos-list">
+                    ${(recData.memos || []).map(m => `
+                      <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-header">
+                          <span class="timeline-author">${m.auteur}</span>
+                          <span class="badge badge-${m.role === 'admin' ? 'encours' : 'attente'}" style="font-size:11px;">${m.role === 'admin' ? 'Admin' : 'Agence'}</span>
+                          <span class="timeline-date">${App.formatDateTime(m.date)}</span>
+                        </div>
+                        <div class="timeline-body">${m.message}</div>
+                      </div>
+                    `).join('')}
+                  </div>
 
-      document.getElementById('btn-add-memo').addEventListener('click', () => {
-        const text = document.getElementById('memo-text').value.trim();
-        if (!text) return;
-        const dest = document.getElementById('memo-dest').value;
-        rec.memos.push({
-          auteur: `${session.prenom} ${session.nom}`,
-          role: dest === 'agence' ? 'admin' : 'admin',
-          date: new Date().toISOString(),
-          message: text
+                  <div class="memo-form">
+                    <div class="form-group">
+                      <label class="form-label">Ajouter un mémo</label>
+                      <textarea class="form-control" id="memo-text" placeholder="Message pour l'agence ou note interne..." rows="3"></textarea>
+                    </div>
+                    <button class="btn btn-accent btn-sm" id="btn-add-memo">Envoyer le mémo</button>
+                  </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>`;
+
+        renderJourney();
+
+        const memoCard = document.getElementById('memo-card');
+        const memoContent = document.getElementById('memo-content');
+        const toggleMemos = document.getElementById('btn-toggle-memos');
+        const memoToggleText = document.getElementById('memo-toggle-text');
+        memoCard.classList.add('is-open'); memoContent.style.display = 'block'; toggleMemos.setAttribute('aria-expanded','true'); memoToggleText.textContent='Masquer';
+        toggleMemos.addEventListener('click', () => {
+          const isOpen = memoCard.classList.toggle('is-open');
+          memoContent.style.display = isOpen ? 'block' : 'none';
+          toggleMemos.setAttribute('aria-expanded', String(isOpen));
+          memoToggleText.textContent = isOpen ? 'Masquer' : 'Afficher';
         });
-        rec.date_modification = new Date().toISOString();
-        App.showToast('Mémo ajouté');
-        renderDetail();
-      });
-    }
 
-    renderDetail();
+        document.getElementById('btn-add-memo').addEventListener('click', async () => {
+          const text = document.getElementById('memo-text').value.trim(); if (!text) return;
+          try {
+            const res = await fetch('../backend/api/memos.php', { method: 'POST', credentials: 'same-origin', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ reference: recData.reference, message: text }) });
+            const j = await res.json(); if (!res.ok) throw new Error(j.error || 'Error');
+            App.showToast('Mémo ajouté');
+            const fresh = await fetchDetail(); recData = fresh.reclamation; recData.statusHistory = fresh.history; recData.memos = fresh.memos; renderDetail();
+          } catch (e) { App.showToast('Erreur ajout mémo','error'); }
+        });
+      }
+
+      renderDetail();
+    })();
   </script>
+<script>
+(function(){
+  const ref=new URLSearchParams(location.search).get('ref');
+  const esc=x=>String(x).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  async function init(){
+    const old=document.querySelector('.detail-text'); if(!old||document.getElementById('client-chat')) return;
+    const section=old.closest('.detail-section'); section.querySelector('h3').textContent='Chat';
+    old.outerHTML='<div id="client-chat" class="chat-box"></div><form id="client-chat-form" class="chat-form"><textarea id="client-chat-input" class="form-control" rows="2" placeholder="Répondre au client..."></textarea><button type="submit" class="btn btn-accent btn-sm">Envoyer</button></form>';
+    async function load(){const res=await fetch('../backend/api/messages.php?reference='+encodeURIComponent(ref),{credentials:'same-origin'});const j=await res.json();document.getElementById('client-chat').innerHTML=(j.messages||[]).map(m=>`<div class="chat-message ${m.role==='admin'?'chat-message-admin':'chat-message-client'}"><div class="chat-meta">${esc(m.auteur)} · ${App.formatDateTime(m.date)}</div><div>${esc(m.message)}</div></div>`).join('')||'<p class="empty-state">Aucun message.</p>';}
+    await load();document.getElementById('client-chat-form').onsubmit=async e=>{e.preventDefault();const i=document.getElementById('client-chat-input');if(!i.value.trim())return;const res=await fetch('../backend/api/messages.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({reference:ref,message:i.value})});if(res.ok){i.value='';load();}};
+  }
+  const timer=setInterval(()=>{init();if(document.getElementById('client-chat'))clearInterval(timer)},100);
+})();
+</script>
 </body>
 </html>

@@ -12,7 +12,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <img src="../assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+          <img src="../assets/img/logo-bmce.png" alt="Bank of Africa — BMCE Group" class="logo-img">
         </div>
       </div>
       <div class="sidebar-user">
@@ -55,11 +55,12 @@
           </div>
           <select class="filter-select" id="filter-statut">
             <option value="">Tous statuts</option>
-            <option value="nouveau">Nouveau</option>
-            <option value="encours">En cours</option>
             <option value="attente">En attente</option>
-            <option value="resolu">Résolu</option>
-            <option value="rejete">Rejeté</option>
+            <option value="encours">En cours</option>
+            <option value="prise_charge">Prise en charge</option>
+            <option value="demande_supplementaire">Demande supplémentaire</option>
+            <option value="resolu">Résolue</option>
+            <option value="cloture">Clôturée</option>
           </select>
           <select class="filter-select" id="filter-gravite">
             <option value="">Toutes priorités</option>
@@ -107,17 +108,18 @@
   </div>
 
   <script src="../assets/js/app.js"></script>
-  <script>
+  <script type="module">
     const session = App.requireAuth(['admin']);
     if (!session) throw new Error('Unauthorized');
 
+    const recs = await App.loadReclamations();
     function renderTable() {
       const q = document.getElementById('search-input').value.toLowerCase();
       const statut = document.getElementById('filter-statut').value;
       const gravite = document.getElementById('filter-gravite').value;
       const type = document.getElementById('filter-type').value;
 
-      const filtered = App.reclamations.filter(r => {
+      const filtered = recs.filter(r => {
         const matchSearch = !q ||
           r.reference.toLowerCase().includes(q) ||
           r.objet.toLowerCase().includes(q) ||

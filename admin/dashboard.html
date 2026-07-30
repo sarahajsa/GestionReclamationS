@@ -12,7 +12,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <img src="../assets/img/logo-bmce.png" alt="BMCE Bank" class="logo-img">
+          <img src="../assets/img/logo-bmce.png" alt="Bank of Africa — BMCE Group" class="logo-img">
         </div>
       </div>
       <div class="sidebar-user">
@@ -91,16 +91,18 @@
   </div>
 
   <script src="../assets/js/app.js"></script>
-  <script>
+  <script type="module">
     const session = App.requireAuth(['admin']);
     if (!session) throw new Error('Unauthorized');
 
-    const recs = App.reclamations;
+    const recs = await App.loadReclamations();
     const stats = {
       total: recs.length,
-      nouveau: recs.filter(r => r.statut === 'nouveau').length,
+      nouveau: recs.filter(r => r.statut === 'attente').length,
       encours: recs.filter(r => r.statut === 'encours').length,
       attente: recs.filter(r => r.statut === 'attente').length,
+      prise_charge: recs.filter(r => r.statut === 'prise_charge').length,
+      demande_supplementaire: recs.filter(r => r.statut === 'demande_supplementaire').length,
       resolu: recs.filter(r => r.statut === 'resolu').length,
       critique: recs.filter(r => r.gravite === 'critique' || r.gravite === 'haute').length
     };
@@ -162,12 +164,13 @@
 
     // Nouveau diagramme de répartition par statut
     const statuses = [
-      { key: 'nouveau', label: 'Nouveau', color: 'var(--status-nouveau)' },
+      { key: 'prise_charge', label: 'Prise en charge', color: 'var(--status-prise-charge)' },
       { key: 'encours', label: 'En cours', color: 'var(--status-encours)' },
       { key: 'attente', label: 'En attente', color: 'var(--status-attente)' },
+      { key: 'demande_supplementaire', label: 'Demande supplémentaire', color: 'var(--status-demande)' },
       { key: 'resolu', label: 'Résolu', color: 'var(--status-resolu)' },
       { key: 'rejete', label: 'Rejeté', color: 'var(--status-rejete)' }
-    ].map(s => ({ ...s, count: recs.filter(r => r.statut === s.key).length }));
+    ].map(s => ({ ...s, count: recs.filter(r => r.statut === s.key).length })).filter(s => s.count > 0);
 
     let statusPosition = 0;
     const statusGradient = statuses.map(s => {
